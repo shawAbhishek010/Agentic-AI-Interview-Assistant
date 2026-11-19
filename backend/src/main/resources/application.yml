@@ -1,0 +1,51 @@
+debug: false
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  profiles:
+    default: local
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+app:
+  jwt-secret: ${JWT_SECRET:local-only-development-secret-replace-with-64-random-characters-now}
+  internal-token: ${INTERNAL_SERVICE_TOKEN:local-development-token-change-me}
+  agent-url: ${AGENT_URL:http://127.0.0.1:8001}
+  cors-origins: ${CORS_ORIGINS:http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173}
+  admin-email: ${ADMIN_EMAIL:}
+  admin-password: ${ADMIN_PASSWORD:}
+  demo-enabled: ${DEMO_ENABLED:true}
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.springframework.web: INFO
+    org.hibernate: WARN
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:file:./.data/placement;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ${LOCAL_DB_PASSWORD:}
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/placement}
+    username: ${POSTGRES_USER:placement}
+    password: ${POSTGRES_PASSWORD}

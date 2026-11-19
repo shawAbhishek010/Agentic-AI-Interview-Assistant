@@ -1,0 +1,219 @@
+{
+  "recorded_at": "2026-11-17T14:51:22.739Z",
+  "runner": "Newman / Postman collection runtime",
+  "stats": {
+    "iterations": {
+      "total": 1,
+      "pending": 0,
+      "failed": 0
+    },
+    "items": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "scripts": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequests": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "requests": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "tests": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "assertions": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "testScripts": {
+      "total": 15,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequestScripts": {
+      "total": 0,
+      "pending": 0,
+      "failed": 0
+    }
+  },
+  "failures": [],
+  "executions": [
+    {
+      "name": "Health",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Create isolated demo account",
+      "method": "POST",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Demo auth succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Current user",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Supported role catalog",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "React questions",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Start exactly five grounded questions",
+      "method": "POST",
+      "status": 201,
+      "assertions": [
+        {
+          "name": "Created five grounded questions",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Read interview",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Submit current answer",
+      "method": "POST",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Save and end partial interview",
+      "method": "POST",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Practice overview",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Topic progress",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Cited closure answer",
+      "method": "POST",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Missing-source fallback",
+      "method": "POST",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "No invented answer or citation",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Source catalog",
+      "method": "GET",
+      "status": 200,
+      "assertions": [
+        {
+          "name": "Request succeeds",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "Admin catalog (403 for demo user)",
+      "method": "GET",
+      "status": 403,
+      "assertions": [
+        {
+          "name": "Demo user cannot administer sources",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

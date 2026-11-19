@@ -1,0 +1,90 @@
+name: placement-ai
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-placement}
+      POSTGRES_USER: ${POSTGRES_USER:-placement}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/init-env.ps1 first}
+    volumes:
+      - placement_db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+      args:
+        INSTALL_SEMANTIC: ${INSTALL_SEMANTIC:-false}
+    environment:
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Run scripts/init-env.ps1 first}
+      AGENT_DATA_DIR: /app/agent/.data
+      PUBLIC_BANK_PATH: /app/data/public/questions.raw.json
+      ZERO_PAID_MODE: "true"
+      GROK_ENABLED: "false"
+      RETRIEVAL_BACKEND: ${RETRIEVAL_BACKEND:-lexical}
+      LANGCHAIN_TRACING_V2: "false"
+      LANGSMITH_TRACING: "false"
+      PIPER_MODEL_PATH: /models/piper/en_US-mike-medium.onnx
+    volumes:
+      - placement_sources:/app/agent/.data
+      - ./.models/piper:/models/piper:ro
+    healthcheck:
+      test: [CMD, /app/agent/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-placement}
+      POSTGRES_USER: ${POSTGRES_USER:-placement}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/init-env.ps1 first}
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/init-env.ps1 first}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Run scripts/init-env.ps1 first}
+      AGENT_URL: http://agent:8001
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8088,http://127.0.0.1:8088}
+      DEBUG: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:8088:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+volumes:
+  placement_db:
+  placement_sources:

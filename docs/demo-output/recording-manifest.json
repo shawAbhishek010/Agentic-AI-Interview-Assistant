@@ -1,0 +1,99 @@
+{
+  "recorded_at": "2026-11-17T14:53:17.677Z",
+  "automated_recording": true,
+  "dry_run": false,
+  "base_url": "http://127.0.0.1:8088",
+  "planned_duration_seconds": 300,
+  "actual_action_events": [
+    {
+      "chapter": "01-introduction",
+      "actual_action_start_seconds": 0,
+      "actual_action_end_seconds": 0.249
+    },
+    {
+      "chapter": "02-overview",
+      "actual_action_start_seconds": 30.014,
+      "actual_action_end_seconds": 30.96
+    },
+    {
+      "chapter": "03-provenance",
+      "actual_action_start_seconds": 55.004,
+      "actual_action_end_seconds": 55.878
+    },
+    {
+      "chapter": "04-interview",
+      "actual_action_start_seconds": 80.006,
+      "actual_action_end_seconds": 80.793
+    },
+    {
+      "chapter": "05-rest-contract",
+      "actual_action_start_seconds": 105.01,
+      "actual_action_end_seconds": 117.732
+    },
+    {
+      "chapter": "06-first-answer",
+      "actual_action_start_seconds": 130.008,
+      "actual_action_end_seconds": 130.581
+    },
+    {
+      "chapter": "07-feedback",
+      "actual_action_start_seconds": 165.008,
+      "actual_action_end_seconds": 166.672
+    },
+    {
+      "chapter": "08-library",
+      "actual_action_start_seconds": 200.01,
+      "actual_action_end_seconds": 200.697
+    },
+    {
+      "chapter": "09-analytics",
+      "actual_action_start_seconds": 225.002,
+      "actual_action_end_seconds": 225.655
+    },
+    {
+      "chapter": "10-retrieval",
+      "actual_action_start_seconds": 250.014,
+      "actual_action_end_seconds": 264.09
+    },
+    {
+      "chapter": "11-local-model",
+      "actual_action_start_seconds": 275.007,
+      "actual_action_end_seconds": 278.937
+    }
+  ],
+  "verified_bank_records": 103,
+  "verified_bank_chunks": 137,
+  "question_ids": [
+    "callback-in-setState",
+    "callback-refs-vs-finddomnode",
+    "children-prop",
+    "class-name",
+    "context"
+  ],
+  "completed_answers": 5,
+  "model_test": {
+    "mode": "local_slm",
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    },
+    "prompt": "What is a closure in JavaScript? Explain it in two short sentences.",
+    "response": "A closure in JavaScript is a function that has access to its own scope and the scope of its outer functions, even when it's called outside of those functions. This allows the inner function to \"remember\" variables from the outer functions, making it a powerful tool for encapsulating data and behavior.",
+    "latency_ms": 3893.25,
+    "usage": {
+      "completion_tokens": 60,
+      "prompt_tokens": 62,
+      "total_tokens": 122
+    }
+  },
+  "microphone_hardware_tested": false,
+  "live_speech_recognition_tested": false,
+  "runtime_errors": [],
+  "actual_duration_seconds": 300,
+  "video_bytes": 7886543,
+  "video_codec": "h264",
+  "audio_codec": "aac",
+  "narration": "Offline Windows SAPI synthetic voice"
+}

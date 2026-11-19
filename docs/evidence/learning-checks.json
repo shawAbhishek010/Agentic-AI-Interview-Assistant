@@ -1,0 +1,33 @@
+{
+    "python":  {
+                   "command":  "uv run --extra voice --extra semantic pytest -q",
+                   "failures":  0,
+                   "passed":  80
+               },
+    "java":  {
+                 "errors":  0,
+                 "source":  "Maven Surefire XML reports",
+                 "failures":  0,
+                 "passed":  30
+             },
+    "browser":  {
+                    "passed":  25,
+                    "full_run":  {
+                                     "command":  "PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088 npm run test:e2e",
+                                     "failed":  1,
+                                     "passed":  24
+                                 },
+                    "targeted_rerun":  {
+                                           "command":  "npm run test:e2e -- tests/conversation-study.spec.ts --grep \u0027Piper audio plays\u0027",
+                                           "reason":  "Updated the previous manual-replay expectation to verify new automatic narration.",
+                                           "failed":  0,
+                                           "passed":  1
+                                       },
+                    "flaky":  0,
+                    "failed_after_targeted_rerun":  0,
+                    "skipped":  0
+                },
+    "recorded_at":  "2026-11-17T16:18:24.2092742Z",
+    "physical_microphone_verified":  false,
+    "real_follow_up_evidence":  "interview-dialogue.json"
+}

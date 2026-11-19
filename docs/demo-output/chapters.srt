@@ -1,0 +1,43 @@
+1
+00:00:00,000 --> 00:00:30,000
+Placement AI / Project 10
+
+2
+00:00:30,000 --> 00:00:55,000
+An isolated student workspace
+
+3
+00:00:55,000 --> 00:01:20,000
+Licensed data and source provenance
+
+4
+00:01:20,000 --> 00:01:45,000
+Exactly five source-grounded questions
+
+5
+00:01:45,000 --> 00:02:10,000
+Actual REST response from this session
+
+6
+00:02:10,000 --> 00:02:45,000
+A saved answer and transparent feedback
+
+7
+00:02:45,000 --> 00:03:20,000
+Complete the interview and review the evidence
+
+8
+00:03:20,000 --> 00:03:45,000
+Practice library and saved questions
+
+9
+00:03:45,000 --> 00:04:10,000
+Progress from real saved activity
+
+10
+00:04:10,000 --> 00:04:35,000
+A cited answer and an honest failure case
+
+11
+00:04:35,000 --> 00:05:00,000
+Actual local SLM evidence

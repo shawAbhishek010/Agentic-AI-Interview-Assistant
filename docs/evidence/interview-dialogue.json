@@ -1,0 +1,38 @@
+{
+  "recorded_at": "2026-11-17T16:13:41.197Z",
+  "scripted_candidate_answer": true,
+  "question": "What is ARIA and when should you use it?",
+  "candidate_answer": "ARIA stands for \"Accessible Rich Internet Applications\", and is a technical specification created by the World Wide Web Consortium (W3C). Better known as WAI-ARIA, it provides additional HTML attributes in the development of web applications to offer people who use assistive technologies (AT) a more robust and interoperable experience with dynamic components. By providing the component's role, name, and state, AT users can better understand how to interact with the component. WAI-ARIA should only be used when an HTML element equivalent is not available or lacks full browser or AT support. WAI-ARIA's semantic markup coupled with JavaScript works to provide an understandable and interactive experience for people who use AT.\n\nAn example using ARIA:\n\n```\n<div \n  role=\"combobox\"\n  aria-expanded=\"false\"\n  aria-owns=\"ex1-grid\"\n  aria-haspopup=\"grid\"\n  id=\"ex1-combobox\">\n  ...\n</div>\n```\nCredit: W3C's [ARIA 1.1 Combobox with Grid Popup Example](https://w3c.github.io/aria-practices/examples/combobox/aria1.1pattern/grid-combo.html)",
+  "asked_follow_up": "Apply this idea to a small example. Explain Accessible Rich Internet Applications in your own words.",
+  "follow_up_reply": {
+    "id": "a6c783a9-9c3a-4db9-89f4-71d77f981035",
+    "question_id": "accessibility-aria",
+    "role": "assistant",
+    "content": "You should use ARIA when an HTML element equivalent is not available or lacks full browser or AT support. For example, consider a dropdown list. Without ARIA, users with screen readers may not be able to understand how to interact with the list. By adding ARIA attributes like role=\"combobox\" and aria-expanded=\"false\", you can provide a more accessible experience for users with disabilities.",
+    "created_at": "2026-11-17T16:13:39.830116937Z",
+    "mode": "local_slm",
+    "source": {
+      "id": "30-seconds",
+      "title": "30 seconds of interviews",
+      "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/accessibility-aria.md",
+      "license": "MIT",
+      "locator": "questions/accessibility-aria.md @ da235b618572"
+    },
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    }
+  },
+  "interview_questions": 5,
+  "scored_turns": 1,
+  "chat_messages": 2,
+  "audio": {
+    "status": 200,
+    "content_type": "audio/wav",
+    "bytes": 903212,
+    "wav_header": "RIFF"
+  },
+  "physical_microphone_verified": false
+}

@@ -1,0 +1,109 @@
+{
+  "backend": "sentence-transformers/FAISS",
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "dimensions": 384,
+  "indexed_chunks": 137,
+  "cases": [
+    {
+      "query": "What are closures in JavaScript?",
+      "expected": "closures",
+      "retrieved": [
+        "closures",
+        "iife",
+        "semicolons"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What are React keys?",
+      "expected": "keys",
+      "retrieved": [
+        "keys",
+        "refs",
+        "children-prop"
+      ],
+      "passed": true
+    },
+    {
+      "query": "Explain the Node.js event loop",
+      "expected": "node-event-loop",
+      "retrieved": [
+        "node-event-loop",
+        "event-driven-programming",
+        "callbacks"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What is CSS specificity?",
+      "expected": "css-specificity",
+      "retrieved": [
+        "css-specificity",
+        "css-preprocessors",
+        "bem"
+      ],
+      "passed": true
+    },
+    {
+      "query": "Explain the CSS box model",
+      "expected": "css-box-model",
+      "retrieved": [
+        "css-box-model"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What is ARIA accessibility?",
+      "expected": "accessibility-aria",
+      "retrieved": [
+        "accessibility-aria",
+        "accessibility-tree",
+        "wcag"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What is prototypal inheritance?",
+      "expected": "prototypal-inheritance",
+      "retrieved": [
+        "prototypal-inheritance"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What is event delegation?",
+      "expected": "event-delegation",
+      "retrieved": [
+        "event-delegation",
+        "event-driven-programming",
+        "node-event-loop"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What are JavaScript promises?",
+      "expected": "promises",
+      "retrieved": [
+        "promises",
+        "callback-hell",
+        "return-semicolon"
+      ],
+      "passed": true
+    },
+    {
+      "query": "What are pure functions?",
+      "expected": "pure-functions",
+      "retrieved": [
+        "pure-functions",
+        "functional-programming",
+        "hoc-component"
+      ],
+      "passed": true
+    }
+  ],
+  "passed": 10,
+  "total": 10,
+  "missing_source_passed": true,
+  "elapsed_seconds": 20.11,
+  "chat_inference": false
+}

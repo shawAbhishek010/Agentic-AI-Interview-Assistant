@@ -1,0 +1,83 @@
+{
+    "recorded_at":  "2026-11-17T14:47:05.788Z",
+    "runtime":  "Docker Compose / PostgreSQL 17 / private llama.cpp CPU server",
+    "model_image":  "ghcr.io/ggml-org/llama.cpp:server-b12464@sha256:5b43086e3ba7ea5794d72904654f6cd41224a9b1c6ac0398f4940ee380d30f23",
+    "model_sha256":  "6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff",
+    "follow_up_integration":  {
+                                  "interview_mode":  "demo",
+                                  "question_count":  5,
+                                  "question_id":  "closures",
+                                  "student_answer":  "A closure lets an inner function remember variables from its outer function even after that outer function has returned.",
+                                  "baseline_rule_based_evaluation":  {
+                                                                         "score":  0,
+                                                                         "accuracy":  0,
+                                                                         "completeness":  0,
+                                                                         "clarity":  0,
+                                                                         "matched_concepts":  [
+
+                                                                                              ],
+                                                                         "missing_concepts":  [
+                                                                                                  "Closures are useful because they let you associate data with a function that operates on that data.",
+                                                                                                  "A closure can substitute an object with only a single method.",
+                                                                                                  "Closures can be used to emulate private properties and methods."
+                                                                                              ],
+                                                                         "feedback":  [
+                                                                                          "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                                                                                          "Matched 0 of 3 source concepts; clarity estimates answer length (20 words reaches 100).",
+                                                                                          "Add the missing source concepts and a concrete example."
+                                                                                      ],
+                                                                         "follow_up":  "Apply this idea to a small example. Explain Closures are useful because they let you associate data with a function that operates on that data in your own words.",
+                                                                         "mode":  "demo",
+                                                                         "source":  {
+                                                                                        "id":  "30-seconds",
+                                                                                        "title":  "30 seconds of interviews",
+                                                                                        "url":  "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/closures.md",
+                                                                                        "license":  "MIT",
+                                                                                        "locator":  "questions/closures.md @ da235b618572"
+                                                                                    },
+                                                                         "follow_up_mode":  "demo",
+                                                                         "model":  null,
+                                                                         "warning":  null
+                                                                     },
+                                  "saved_evaluation":  {
+                                                           "score":  0,
+                                                           "accuracy":  0,
+                                                           "completeness":  0,
+                                                           "clarity":  0,
+                                                           "matched_concepts":  [
+
+                                                                                ],
+                                                           "missing_concepts":  [
+                                                                                    "Closures are useful because they let you associate data with a function that operates on that data.",
+                                                                                    "A closure can substitute an object with only a single method.",
+                                                                                    "Closures can be used to emulate private properties and methods."
+                                                                                ],
+                                                           "feedback":  [
+                                                                            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                                                                            "Matched 0 of 3 source concepts; clarity estimates answer length (20 words reaches 100).",
+                                                                            "Add the missing source concepts and a concrete example."
+                                                                        ],
+                                                           "follow_up":  "Can you explain how a closure\u0027s access to variables in the global scope is useful in a real-world JavaScript application?",
+                                                           "mode":  "demo",
+                                                           "source":  {
+                                                                          "id":  "30-seconds",
+                                                                          "title":  "30 seconds of interviews",
+                                                                          "url":  "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/closures.md",
+                                                                          "license":  "MIT",
+                                                                          "locator":  "questions/closures.md @ da235b618572"
+                                                                      },
+                                                           "follow_up_mode":  "local_slm",
+                                                           "model":  {
+                                                                         "provider":  "llama.cpp",
+                                                                         "model_id":  "Llama-3.2-3B-Instruct",
+                                                                         "status":  "ready",
+                                                                         "local":  true
+                                                                     },
+                                                           "warning":  null
+                                                       },
+                                  "round_trip_ms":  2099,
+                                  "persisted_after_get":  true,
+                                  "rubric_unchanged":  true
+                              },
+    "final_default_followups":  "false; configurable through LOCAL_SLM_FOLLOWUPS in compose.slm.yaml"
+}

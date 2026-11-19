@@ -1,0 +1,457 @@
+{
+  "info": {
+    "name": "Placement AI — live REST demonstration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run requests in order. This creates an isolated demo account. No paid model calls or live SLM inference are claimed."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8088"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "interview_id",
+      "value": ""
+    },
+    {
+      "key": "question_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create isolated demo account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/auth/demo",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Demo auth succeeds',()=>pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('token',pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Current user",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/me"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supported role catalog",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/catalog"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "React questions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/questions?role=React%20Developer"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Start exactly five grounded questions",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/interviews",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"Backend Developer\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Created five grounded questions',()=>{pm.response.to.have.status(201);const b=pm.response.json();pm.expect(b.questions).to.have.length(5);pm.expect(new Set(b.questions.map(q=>q.id)).size).to.eql(5);b.questions.forEach(q=>{pm.expect(q.answer).to.be.a('string');pm.expect(q.follow_up).to.be.a('string');pm.expect(q.source.url).to.match(/^https:/);});pm.collectionVariables.set('interview_id',b.id);pm.collectionVariables.set('question_id',b.questions[0].id);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read interview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/interviews/{{interview_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit current answer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/interviews/{{interview_id}}/answers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question_id\": \"{{question_id}}\",\n  \"answer\": \"An asynchronous callback lets other work continue while a pending operation completes.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Save and end partial interview",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/interviews/{{interview_id}}/finish",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancel\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Practice overview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/analytics/overview"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Topic progress",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/analytics/topics"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cited closure answer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/knowledge/query",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"What are JavaScript closures?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing-source fallback",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/knowledge/query",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"Explain photosynthesis chloroplasts in orchids\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('No invented answer or citation',()=>{const b=pm.response.json();pm.expect(b.answer).to.eql('Not found in the interview knowledge base');pm.expect(b.questions).to.have.length(0);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Source catalog",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/sources"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Request succeeds',()=>pm.expect(pm.response.code).to.be.within(200,299));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin catalog (403 for demo user)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/admin/sources"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Demo user cannot administer sources',()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

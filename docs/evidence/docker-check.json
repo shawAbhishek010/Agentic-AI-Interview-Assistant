@@ -1,0 +1,10 @@
+{
+  "recorded_at": "2026-11-16T16:18:18.116Z",
+  "runtime": "Docker Compose / PostgreSQL 17",
+  "api_restart_persistence": "passed",
+  "admin_import_reindex_delete": "passed",
+  "imported_role_exact_five": "passed",
+  "ordinary_user_admin_access": 403,
+  "remaining_sources": 1,
+  "model_mode": "demo; no paid chat calls"
+}

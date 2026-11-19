@@ -1,0 +1,133 @@
+{
+  "recorded_at": "2026-11-17T15:58:35.970Z",
+  "synthetic_document": true,
+  "tutoring": {
+    "id": "7a93c078-be12-41a0-9dca-b7d443178c33",
+    "question_id": "accessibility-aria",
+    "role": "assistant",
+    "content": "ARIA (Accessible Rich Internet Applications) is a way to make web applications more accessible to people who use assistive technologies like screen readers. It adds special HTML attributes to elements to help screen readers understand how to interact with them. For example, the code above adds a role, expanded state, and a popup grid to a combobox element, making it easier for screen readers to understand how to use it.",
+    "created_at": "2026-11-17T15:58:15.416534842Z",
+    "mode": "local_slm",
+    "source": {
+      "id": "30-seconds",
+      "title": "30 seconds of interviews",
+      "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/accessibility-aria.md",
+      "license": "MIT",
+      "locator": "questions/accessibility-aria.md @ da235b618572"
+    },
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    }
+  },
+  "cross_question": {
+    "id": "f89dfb0f-1cd2-4a77-a404-d8ec4c4baeeb",
+    "question_id": "accessibility-aria",
+    "role": "assistant",
+    "content": "The example from the reference shows how to use ARIA attributes on a combobox element. The `role=\"combobox\"` attribute indicates the role of the element, `aria-expanded=\"false\"` indicates its initial state, and `aria-owns=\"ex1-grid\"` and `aria-haspopup=\"grid\"` indicate the relationship with other elements. This helps screen readers understand how to interact with the element, making it more accessible to people who use assistive technologies.",
+    "created_at": "2026-11-17T15:58:24.710334083Z",
+    "mode": "local_slm",
+    "source": {
+      "id": "30-seconds",
+      "title": "30 seconds of interviews",
+      "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/accessibility-aria.md",
+      "license": "MIT",
+      "locator": "questions/accessibility-aria.md @ da235b618572"
+    },
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    }
+  },
+  "interview_questions": 5,
+  "scored_turns": 0,
+  "saved_chat_messages": 4,
+  "piper": {
+    "status": 200,
+    "content_type": "audio/wav",
+    "audio_bytes": 942124,
+    "wav_header": "RIFF"
+  },
+  "study_document": {
+    "id": "48ee2223-27e6-4fd8-8c1b-f673e18190a9",
+    "title": "Synthetic verification lesson",
+    "file_name": "transaction-lesson.txt",
+    "character_count": 247,
+    "chunk_count": 1,
+    "created_at": "2026-11-17T15:58:26.488307458Z",
+    "status": "ready",
+    "excerpt": "Database transactions have ACID properties. Atomicity means all changes commit together or roll back together. Consistency preserves database rules. Isolation separates concurrent transactions. Durability means committed changes survive a restart.",
+    "materials": []
+  },
+  "notes": {
+    "title": "Atomicity",
+    "summary": "Atomicity ensures all changes are either fully committed or rolled back.",
+    "bullets": [
+      "Ensures all changes are either fully committed or rolled back.",
+      "Prevents partial changes from being committed.",
+      "Maintains database consistency and rules."
+    ],
+    "kind": "notes",
+    "request": "Explain atomicity in simple language with key points.",
+    "mode": "local_slm",
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    },
+    "sources": [
+      {
+        "id": "chunk-1",
+        "title": "Synthetic verification lesson",
+        "locator": "Text, passage 1",
+        "excerpt": "Database transactions have ACID properties. Atomicity means all changes commit together or roll back together. Consistency preserves database rules. Isolation separates concurrent transactions. Durability means committed changes survive a restart."
+      }
+    ],
+    "id": "464d9add-0904-4e20-a99c-fc64ce9d4870",
+    "created_at": "2026-11-17T15:58:31.496081751Z"
+  },
+  "questions": {
+    "title": "Synthetic verification lesson — practice questions",
+    "questions": [
+      {
+        "question": "What is atomicity in database transactions?",
+        "answer": "All changes commit together or roll back together.",
+        "citation_ids": [
+          "chunk-1"
+        ]
+      },
+      {
+        "question": "What is durability in database transactions?",
+        "answer": "Committed changes survive a restart.",
+        "citation_ids": [
+          "chunk-1"
+        ]
+      }
+    ],
+    "kind": "questions",
+    "request": "Create two short questions about atomicity and durability.",
+    "mode": "local_slm",
+    "model": {
+      "provider": "llama.cpp",
+      "model_id": "Llama-3.2-3B-Instruct",
+      "status": "ready",
+      "local": true
+    },
+    "sources": [
+      {
+        "id": "chunk-1",
+        "title": "Synthetic verification lesson",
+        "locator": "Text, passage 1",
+        "excerpt": "Database transactions have ACID properties. Atomicity means all changes commit together or roll back together. Consistency preserves database rules. Isolation separates concurrent transactions. Durability means committed changes survive a restart."
+      }
+    ],
+    "id": "9ef53408-e312-4ca2-8467-247a4b9c4bd4",
+    "created_at": "2026-11-17T15:58:35.887118637Z"
+  },
+  "cross_account_document_access": 404
+}

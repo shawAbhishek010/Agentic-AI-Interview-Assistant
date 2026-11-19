@@ -1,0 +1,43 @@
+{
+  "input_records": 103,
+  "indexed_chunks": 137,
+  "source": {
+    "id": "30-seconds",
+    "title": "30 seconds of interviews",
+    "url": "https://github.com/30-seconds/30-seconds-of-interviews/tree/da235b6185721161b7ebc413075b76dc70339ccf",
+    "license": "MIT",
+    "status": "indexed",
+    "question_count": 103,
+    "chunk_count": 137
+  },
+  "sample_question": {
+    "id": "closures",
+    "role": "Frontend Developer",
+    "topic": "JavaScript",
+    "difficulty": "intermediate",
+    "question": "What is a closure? Can you give a useful example of one?",
+    "answer": "A closure is a function defined inside another function and has access to its lexical scope even when it is executing outside its lexical scope. The closure has access to variables in three scopes:\n\n* Variables declared in its own scope\n* Variables declared in the scope of the parent function\n* Variables declared in the global scope\n\nIn JavaScript, all functions are closures because they have access to the outer scope, but most functions don't utilise the usefulness of closures: the persistence of state. Closures are also sometimes called stateful functions because of this.\n\nIn addition, closures are the only way to store private data that can't be accessed from the outside in JavaScript. They are the key to the UMD (Universal Module Definition) pattern, which is frequently used in libraries that only expose a public API but keep the implementation details private, preventing name collisions with other libraries or the user's own code.",
+    "follow_up": "Apply this idea to a small example. Explain Closures are useful because they let you associate data with a function that operates on that data in your own words.",
+    "concepts": [
+      "Closures are useful because they let you associate data with a function that operates on that data.",
+      "A closure can substitute an object with only a single method.",
+      "Closures can be used to emulate private properties and methods."
+    ],
+    "source": {
+      "id": "30-seconds",
+      "title": "30 seconds of interviews",
+      "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/closures.md",
+      "license": "MIT",
+      "locator": "questions/closures.md @ da235b618572"
+    }
+  },
+  "sample_chunk": {
+    "text": "What is a closure? Can you give a useful example of one?\nA closure is a function defined inside another function and has access to its lexical scope even when it is executing outside its lexical scope. The closure has access to variables in three scopes:\n\n* Variables declared in its own scope\n* Variables declared in the scope of the parent function\n* Variables declared in the global scope\n\nIn JavaScript, all functions are closures because they have access to the outer scope, but most functions don't utilise the usefulness of closures: the persistence of state. Closures are also sometimes called stateful functions because of this.\n\nIn addition, closures are the only way to store private data that can't be accessed from the outside in JavaScript. They are the key to the UMD (Universal Module Definition) pattern, which is frequently used in libraries that only expose a public API but keep the implementation details private, preventing name collisions with other libraries or the user's own code.",
+    "metadata": {
+      "question_id": "closures",
+      "source_id": "30-seconds",
+      "locator": "questions/closures.md @ da235b618572",
+      "offset": 0
+    }
+  }
+}

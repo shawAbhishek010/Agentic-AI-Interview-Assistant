@@ -1,0 +1,51 @@
+# Optional, entirely local CPU inference. Prepare and verify the GGUF model first.
+# docker compose -f compose.yaml -f compose.slm.yaml up --build -d
+services:
+  slm:
+    # Official llama.cpp CPU server; version and manifest digest verified together.
+    image: ghcr.io/ggml-org/llama.cpp:server-b12464@sha256:5b43086e3ba7ea5794d72904654f6cd41224a9b1c6ac0398f4940ee380d30f23
+    environment:
+      LLAMA_API_KEY: ${SLM_API_KEY:-${INTERNAL_SERVICE_TOKEN:?Run scripts/init-env.ps1 first}}
+    command:
+      - --model
+      - /models/Llama-3.2-3B-Instruct-Q4_K_M.gguf
+      - --alias
+      - ${SLM_MODEL_ID:-Llama-3.2-3B-Instruct}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "4096"
+      - --threads
+      - "4"
+      - --parallel
+      - "1"
+      - --n-predict
+      - "128"
+      - --no-webui
+    volumes:
+      - type: bind
+        source: ./.models
+        target: /models
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      # llama.cpp deliberately makes /health public; model APIs still require a key.
+      test: [CMD, curl, -fsS, "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+    restart: unless-stopped
+  agent:
+    environment:
+      SLM_ENABLED: "true"
+      LOCAL_SLM_URL: http://slm:8080/v1
+      SLM_MODEL_ID: ${SLM_MODEL_ID:-Llama-3.2-3B-Instruct}
+      SLM_API_KEY: ${SLM_API_KEY:-${INTERNAL_SERVICE_TOKEN:?Run scripts/init-env.ps1 first}}
+      LOCAL_SLM_FOLLOWUPS: ${LOCAL_SLM_FOLLOWUPS:-false}
+    depends_on:
+      slm:
+        condition: service_healthy

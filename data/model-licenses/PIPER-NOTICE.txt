@@ -1,0 +1,10 @@
+Piper is an open-source offline speech engine (GPL-3.0-or-later).
+Engine: https://github.com/OHF-Voice/piper1-gpl
+Runtime package: piper-tts 1.8.0
+
+Voice: en_US-mike-medium
+Source: https://huggingface.co/rhasspy/piper-voices/tree/e9ab671f2a0e50a701b34361136ba3e6a3a9eb0c/en/en_US/mike/medium
+Voice ONNX SHA-256: 6876866e3dfadc7f044bc5e4fbac16c47b5a1e79eaec04e3bb0c2c6e9da8a857
+The accompanying model card documents the CC0 training dataset and CC0 base-model chain.
+Read PIPER-MODEL-CARD.txt and the upstream engine license before redistributing.
+No hosted speech API, billing, raw microphone storage, or voice cloning is used.

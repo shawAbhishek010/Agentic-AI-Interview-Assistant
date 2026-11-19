@@ -1,0 +1,1340 @@
+{
+  "recorded_at": "2026-11-16T16:29:02.080Z",
+  "environment": "live local gateway → FastAPI agent; H2 development persistence",
+  "catalog": {
+    "roles": [
+      "Backend Developer",
+      "Frontend Developer",
+      "Full Stack Developer",
+      "JavaScript Developer",
+      "React Developer"
+    ],
+    "topics": [
+      "Accessibility",
+      "CSS",
+      "HTML",
+      "JavaScript",
+      "Node.js",
+      "React",
+      "Security"
+    ],
+    "question_count": 103,
+    "mode": "demo"
+  },
+  "examples": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/api/interviews",
+        "body": {
+          "role": "Backend Developer"
+        }
+      },
+      "status": 201,
+      "response": {
+        "id": "f9f2a7f4-6e8d-4ad6-95b9-f4de95e68af8",
+        "role": "Backend Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "active",
+        "questions": [
+          {
+            "id": "batches",
+            "role": "Backend Developer",
+            "topic": "JavaScript",
+            "difficulty": "beginner",
+            "question": "Create a function `batches` that returns the maximum number of whole batches that can be cooked from a recipe.\n\n```js\n/**\nIt accepts two objects as arguments: the first object is the recipe\nfor the food, while the second object is the available ingredients.\nEach ingredient's value is a number representing how many units there are.\n\n`batches(recipe, available)`\n*/\n\n// 0 batches can be made\nbatches(\n  { milk: 100, butter: 50, flour: 5 },\n  { milk: 132, butter: 48, flour: 51 }\n)\nbatches(\n  { milk: 100, flour: 4, sugar: 10, butter: 5 },\n  { milk: 1288, flour: 9, sugar: 95 }\n)\n\n// 1 batch can be made\nbatches(\n  { milk: 100, butter: 50, cheese: 10 },\n  { milk: 198, butter: 52, cheese: 10 }\n)\n\n// 2 batches can be made\nbatches(\n  { milk: 2, sugar: 40, butter: 20 },\n  { milk: 5, sugar: 120, butter: 500 }\n)\n```",
+            "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+            "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+            "concepts": [
+              "available",
+              "batch",
+              "batches",
+              "each",
+              "ingredient"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+              "license": "MIT",
+              "locator": "questions/batches.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-hell",
+            "role": "Backend Developer",
+            "topic": "Node.js",
+            "difficulty": "intermediate",
+            "question": "How can you avoid callback hells?\n\n```js\ngetData(function(a) {\n  getMoreData(a, function(b) {\n    getMoreData(b, function(c) {\n      getMoreData(c, function(d) {\n        getMoreData(d, function(e) {\n          // ...\n        })\n      })\n    })\n  })\n})\n```",
+            "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+            "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+            "concepts": [
+              "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+              "license": "MIT",
+              "locator": "questions/callback-hell.md @ da235b618572"
+            }
+          },
+          {
+            "id": "xss",
+            "role": "Backend Developer",
+            "topic": "Security",
+            "difficulty": "beginner",
+            "question": "What is a cross-site scripting attack (XSS) and how do you prevent it?",
+            "answer": "XSS refers to client-side code injection where the attacker injects malicious scripts into a legitimate website or web application. This is often achieved when the application does not validate user input and freely injects dynamic HTML content.\n\nFor example, a comment system will be at risk if it does not validate or escape user input. If the comment contains unescaped HTML, the comment can inject a `<script>` tag into the website that other users will execute against their knowledge.\n\n* The malicious script has access to cookies which are often used to store session tokens. If an attacker can obtain a user’s session cookie, they can impersonate the user.\n* The script can arbitrarily manipulate the DOM of the page the script is executing in, allowing the attacker to insert pieces of content that appear to be a real part of the website.\n* The script can use AJAX to send HTTP requests with arbitrary content to arbitrary destinations.",
+            "follow_up": "Apply this idea to a small example. Explain On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it in your own words.",
+            "concepts": [
+              "On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it.",
+              "On the server, escaping HTML tags will prevent the browser from parsing the user input as actual HTML and therefore won't execute the script."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/xss.md",
+              "license": "MIT",
+              "locator": "questions/xss.md @ da235b618572"
+            }
+          },
+          {
+            "id": "big-o-notation",
+            "role": "Backend Developer",
+            "topic": "JavaScript",
+            "difficulty": "intermediate",
+            "question": "What is Big O Notation?",
+            "answer": "Big O notation is used in Computer Science to describe the time complexity of an algorithm. The best algorithms will execute the fastest and have the simplest complexity.\n\nAlgorithms don't always perform the same and may vary based on the data they are supplied. While in some cases they will execute quickly, in other cases they will execute slowly, even with the same number of elements to deal with.\n\nIn these examples, the base time is 1 element = `1ms`.\n\n##### O(1)\n\n```js\narr[arr.length - 1]\n```\n\n* 1000 elements = `1ms`\n\nConstant time complexity. No matter how many elements the array has, it will theoretically take (excluding real-world variation) the same amount of time to execute.\n\n##### O(N)\n\n```js\narr.filter(fn)\n```\n\n* 1000 elements = `1000ms`\n\nLinear time complexity. The execution time will increase linearly with the number of elements the array has. If the array has 1000 elements and the function takes 1ms to execute, 7000 elements will take 7ms to execute. This is because the function must iterate through all elements of the array before returning a result.\n\n##### O([1, N])\n\n```js\narr.some(fn)\n```\n\n* 1000 elements = `1ms <= x <= 1000ms`\n\nThe execution time varies depending on the data supplied to the function, it may return very early or very late. The best case here is O(1) and the worst case is O(N).\n\n##### O(NlogN)\n\n```js\narr.sort(fn)\n```\n\n* 1000 elements ~= `10000ms`\n\nBrowsers usually implement the quicksort algorithm for the `sort()` method and the average time complexity of quicksort is O(NlgN). This is very efficient for large collections.\n\n##### O(N^2)\n\n```js\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; j < arr.length; j++) {\n    // ...\n  }\n}\n```\n\n* 1000 elements = `1000000ms`\n\nThe execution time rises quadratically with the number of elements. Usually the result of nesting loops.\n\n##### O(N!)\n\n```js\nconst permutations = arr => {\n  if (arr.length <= 2) return arr.length === 2 ? [arr, [arr[1], arr[0]]] : arr\n  return arr.reduce(\n    (acc, item, i) =>\n      acc.concat(\n        permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map(val => [\n          item,\n          ...val\n        ])\n      ),\n    []\n  )\n}\n```\n\n* 1000 elements = `Infinity` (practically) ms\n\nThe execution time rises extremely fast with even just 1 addition to the array.",
+            "follow_up": "Apply this idea to a small example. Explain Be wary of nesting loops as execution time increases exponentially in your own words.",
+            "concepts": [
+              "Be wary of nesting loops as execution time increases exponentially."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/big-o-notation.md",
+              "license": "MIT",
+              "locator": "questions/big-o-notation.md @ da235b618572"
+            }
+          },
+          {
+            "id": "node-error-first-callback",
+            "role": "Backend Developer",
+            "topic": "Node.js",
+            "difficulty": "beginner",
+            "question": "NodeJS often uses a callback pattern where if an error is encountered during execution, this error is passed as the first argument to the callback. What are the advantages of this pattern?\n\n```js\nfs.readFile(filePath, function(err, data) {\n  if (err) {\n    // handle the error, the return is important here\n    // so execution stops here\n    return console.log(err)\n  }\n  // use the data object\n  console.log(data)\n})\n```",
+            "answer": "Advantages include:\n\n* Not needing to process data if there is no need to even reference it\n* Having a consistent API leads to more adoption\n* Ability to easily adapt a callback pattern that will lead to more maintainable code\n\nAs you can see from below example, the callback is called with null as its first argument if there is no error. However, if there is an error, you create an Error object, which then becomes the callback's only parameter. The callback function allows a user to easily know whether or not an error occurred.\n\nThis practice is also called the _Node.js error convention_, and this kind of callback implementations are called _error-first callbacks_.\n\n```js\nvar isTrue = function(value, callback) {\n  if (value === true) {\n    callback(null, \"Value was true.\")\n  } else {\n    callback(new Error(\"Value is not true!\"))\n  }\n}\n\nvar callback = function(error, retval) {\n  if (error) {\n    console.log(error)\n    return\n  }\n  console.log(retval)\n}\n\nisTrue(false, callback)\nisTrue(true, callback)\n\n/*\n  { stack: [Getter/Setter],\n    arguments: undefined,\n    type: undefined,\n    message: 'Value is not true!' }\n  Value was true.\n*/\n```",
+            "follow_up": "Apply this idea to a small example. Explain This is just a convention. However, you should stick to it in your own words.",
+            "concepts": [
+              "This is just a convention. However, you should stick to it."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/node-error-first-callback.md",
+              "license": "MIT",
+              "locator": "questions/node-error-first-callback.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 55 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.365
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.009
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.007
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.802484700Z",
+        "finished_at": null
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/api/interviews",
+        "body": {
+          "role": "React Developer"
+        }
+      },
+      "status": 201,
+      "response": {
+        "id": "94e74225-9b0c-4086-8fd1-7149964e79fe",
+        "role": "React Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "active",
+        "questions": [
+          {
+            "id": "callback-in-setState",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "beginner",
+            "question": "What is the purpose of callback function as an argument of `setState`?",
+            "answer": "The callback function is invoked when `setState` has finished and the component gets rendered. Since `setState` is asynchronous, the callback function is used for any post action.\n\n```js\nsetState({ name: \"sudheer\" }, () => {\n  console.log(\"The name has updated and component re-rendered\")\n})\n```",
+            "follow_up": "Apply this idea to a small example. Explain The callback function is invoked after `setState` finishes and is used for any post action in your own words.",
+            "concepts": [
+              "The callback function is invoked after `setState` finishes and is used for any post action.",
+              "It is recommended to use lifecycle method rather this callback function."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-in-setState.md",
+              "license": "MIT",
+              "locator": "questions/callback-in-setState.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-refs-vs-finddomnode",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "Which is the preferred option between callback refs and findDOMNode()?",
+            "answer": "Callback refs are preferred over the `findDOMNode()` API, due to the fact that `findDOMNode()` prevents certain improvements in React in the future.\n\n```js\n// Legacy approach using findDOMNode()\nclass MyComponent extends Component {\n  componentDidMount() {\n    findDOMNode(this).scrollIntoView()\n  }\n\n  render() {\n    return <div />\n  }\n}\n\n// Recommended approach using callback refs\nclass MyComponent extends Component {\n  componentDidMount() {\n    this.node.scrollIntoView()\n  }\n\n  render() {\n    return <div ref={node => (this.node = node)} />\n  }\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Callback refs are preferred over `findDOMNode()` in your own words.",
+            "concepts": [
+              "Callback refs are preferred over `findDOMNode()`."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-refs-vs-finddomnode.md",
+              "license": "MIT",
+              "locator": "questions/callback-refs-vs-finddomnode.md @ da235b618572"
+            }
+          },
+          {
+            "id": "children-prop",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "What is the `children` prop?",
+            "answer": "`children` is part of the props object passed to components that allows components to be passed as data to other components, providing the ability to compose components cleanly. There are a number of methods available in the React API to work with this prop, such as `React.Children.map`, `React.Children.forEach`, `React.Children.count`, `React.Children.only` and `React.Children.toArray`. A simple usage example of the children prop is as follows:\n\n```js\nfunction GenericBox({ children }) {\n  return <div className=\"container\">{children}</div>\n}\n\nfunction App() {\n  return (\n    <GenericBox>\n      <span>Hello</span> <span>World</span>\n    </GenericBox>\n  )\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Children is a prop that allows components to be passed as data to other components in your own words.",
+            "concepts": [
+              "Children is a prop that allows components to be passed as data to other components.",
+              "The React API provides methods to work with this prop."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/children-prop.md",
+              "license": "MIT",
+              "locator": "questions/children-prop.md @ da235b618572"
+            }
+          },
+          {
+            "id": "class-name",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "beginner",
+            "question": "Why does React use `className` instead of `class` like in HTML?",
+            "answer": "React's philosophy in the beginning was to align with the browser DOM API rather than HTML, since that more closely represents how elements are created. Setting a `class` on an element meant using the `className` API:\n\n```js\nconst element = document.createElement(\"div\")\nelement.className = \"hello\"\n```\n\nAdditionally, before ES5, reserved words could not be used in objects:\n\n```js\nconst element = {\n  attributes: {\n    class: \"hello\"\n  }\n}\n```\n\nIn IE8, this will throw an error.\n\nIn modern environments, destructuring will throw an error if trying to assign to a variable:\n\n```js\nconst { class } = this.props // Error\nconst { className } = this.props // All good\nconst { class: className } = this.props // All good, but cumbersome!\n```\n\nHowever, `class` _can_ be used as a prop without problems, as seen in other libraries like Preact. React currently allows you to use `class`, but will throw a warning and convert it to `className` under the hood. There is currently an open thread (as of January 2019) discussing changing `className` to `class` to reduce confusion.",
+            "follow_up": "Apply this idea to a small example. Explain class in your own words.",
+            "concepts": [
+              "class",
+              "classname",
+              "html",
+              "like",
+              "react"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/class-name.md",
+              "license": "MIT",
+              "locator": "questions/class-name.md @ da235b618572"
+            }
+          },
+          {
+            "id": "context",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "What is context?",
+            "answer": "Context provides a way to pass data through the component tree without having to pass props down manually at every level. For example, authenticated user, locale preference, UI theme need to be accessed in the application by many components.\n\n```js\nconst { Provider, Consumer } = React.createContext(defaultValue)\n```",
+            "follow_up": "Apply this idea to a small example. Explain Context provides a way to pass data through a tree of React components, without having to manually pass props in your own words.",
+            "concepts": [
+              "Context provides a way to pass data through a tree of React components, without having to manually pass props.",
+              "Context is designed to share data that is considered _global_ for a tree of React components."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/context.md",
+              "license": "MIT",
+              "locator": "questions/context.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 24 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.117
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.007
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.004
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.821488600Z",
+        "finished_at": null
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/api/interviews",
+        "body": {
+          "role": "Frontend Developer"
+        }
+      },
+      "status": 201,
+      "response": {
+        "id": "e71577df-78e3-4db4-b60a-b7824d8e93d8",
+        "role": "Frontend Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "active",
+        "questions": [
+          {
+            "id": "accessibility-aria",
+            "role": "Frontend Developer",
+            "topic": "Accessibility",
+            "difficulty": "beginner",
+            "question": "What is ARIA and when should you use it?",
+            "answer": "ARIA stands for \"Accessible Rich Internet Applications\", and is a technical specification created by the World Wide Web Consortium (W3C). Better known as WAI-ARIA, it provides additional HTML attributes in the development of web applications to offer people who use assistive technologies (AT) a more robust and interoperable experience with dynamic components. By providing the component's role, name, and state, AT users can better understand how to interact with the component. WAI-ARIA should only be used when an HTML element equivalent is not available or lacks full browser or AT support. WAI-ARIA's semantic markup coupled with JavaScript works to provide an understandable and interactive experience for people who use AT.\n\nAn example using ARIA:\n\n```\n<div \n  role=\"combobox\"\n  aria-expanded=\"false\"\n  aria-owns=\"ex1-grid\"\n  aria-haspopup=\"grid\"\n  id=\"ex1-combobox\">\n  ...\n</div>\n```\nCredit: W3C's [ARIA 1.1 Combobox with Grid Popup Example](https://w3c.github.io/aria-practices/examples/combobox/aria1.1pattern/grid-combo.html)",
+            "follow_up": "Apply this idea to a small example. Explain Accessible Rich Internet Applications in your own words.",
+            "concepts": [
+              "Accessible Rich Internet Applications",
+              "Benefits people who use assistive technologies (AT)",
+              "Provides role, name, and state",
+              "Semantic HTML coupled with JavaScript"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/accessibility-aria.md",
+              "license": "MIT",
+              "locator": "questions/accessibility-aria.md @ da235b618572"
+            }
+          },
+          {
+            "id": "alt-attribute",
+            "role": "Frontend Developer",
+            "topic": "HTML",
+            "difficulty": "beginner",
+            "question": "What is the purpose of the `alt` attribute on images?",
+            "answer": "The `alt` attribute provides alternative information for an image if a user cannot view it. The `alt` attribute should be used to describe any images except those which only serve a decorative purpose, in which case it should be left empty.",
+            "follow_up": "Apply this idea to a small example. Explain Decorative images should have an empty `alt` attribute in your own words.",
+            "concepts": [
+              "Decorative images should have an empty `alt` attribute.",
+              "Web crawlers use `alt` tags to understand image content, so they are considered important for Search Engine Optimization (SEO).",
+              "Put the `.` at the end of `alt` tag to improve accessibility."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/alt-attribute.md",
+              "license": "MIT",
+              "locator": "questions/alt-attribute.md @ da235b618572"
+            }
+          },
+          {
+            "id": "batches",
+            "role": "Frontend Developer",
+            "topic": "JavaScript",
+            "difficulty": "beginner",
+            "question": "Create a function `batches` that returns the maximum number of whole batches that can be cooked from a recipe.\n\n```js\n/**\nIt accepts two objects as arguments: the first object is the recipe\nfor the food, while the second object is the available ingredients.\nEach ingredient's value is a number representing how many units there are.\n\n`batches(recipe, available)`\n*/\n\n// 0 batches can be made\nbatches(\n  { milk: 100, butter: 50, flour: 5 },\n  { milk: 132, butter: 48, flour: 51 }\n)\nbatches(\n  { milk: 100, flour: 4, sugar: 10, butter: 5 },\n  { milk: 1288, flour: 9, sugar: 95 }\n)\n\n// 1 batch can be made\nbatches(\n  { milk: 100, butter: 50, cheese: 10 },\n  { milk: 198, butter: 52, cheese: 10 }\n)\n\n// 2 batches can be made\nbatches(\n  { milk: 2, sugar: 40, butter: 20 },\n  { milk: 5, sugar: 120, butter: 500 }\n)\n```",
+            "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+            "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+            "concepts": [
+              "available",
+              "batch",
+              "batches",
+              "each",
+              "ingredient"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+              "license": "MIT",
+              "locator": "questions/batches.md @ da235b618572"
+            }
+          },
+          {
+            "id": "bem",
+            "role": "Frontend Developer",
+            "topic": "CSS",
+            "difficulty": "beginner",
+            "question": "What is CSS BEM?",
+            "answer": "The BEM methodology is a naming convention for CSS classes in order to keep CSS more maintainable by defining namespaces to solve scoping issues. BEM stands for Block Element Modifier which is an explanation for its structure. A Block is a standalone component that is reusable across projects and acts as a \"namespace\" for sub components (Elements). Modifiers are used as flags when a Block or Element is in a certain state or is different in structure or style.\n\n```css\n/* block component */\n.block {\n}\n\n/* element */\n.block__element {\n}\n\n/* modifier */\n.block__element--modifier {\n}\n```\n\nHere is an example with the class names on markup:\n\n```html\n<nav class=\"navbar\">\n  <a href=\"/\" class=\"navbar__link navbar__link--active\"></a>\n  <a href=\"/\" class=\"navbar__link\"></a>\n  <a href=\"/\" class=\"navbar__link\"></a>\n</nav>\n```\n\nIn this case, `navbar` is the Block, `navbar__link` is an Element that makes no sense outside of the `navbar` component, and `navbar__link--active` is a Modifier that indicates a different state for the `navbar__link` Element.\n\nSince Modifiers are verbose, many opt to use `is-*` flags instead as modifiers.\n\n```html\n<a href=\"/\" class=\"navbar__link is-active\"></a>\n```\n\nThese must be chained to the Element and never alone however, or there will be scope issues.\n\n```css\n.navbar__link.is-active {\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Alternative solutions to scope issues like CSS-in-JS in your own words.",
+            "concepts": [
+              "Alternative solutions to scope issues like CSS-in-JS"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/bem.md",
+              "license": "MIT",
+              "locator": "questions/bem.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-hell",
+            "role": "Frontend Developer",
+            "topic": "Node.js",
+            "difficulty": "intermediate",
+            "question": "How can you avoid callback hells?\n\n```js\ngetData(function(a) {\n  getMoreData(a, function(b) {\n    getMoreData(b, function(c) {\n      getMoreData(c, function(d) {\n        getMoreData(d, function(e) {\n          // ...\n        })\n      })\n    })\n  })\n})\n```",
+            "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+            "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+            "concepts": [
+              "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+              "license": "MIT",
+              "locator": "questions/callback-hell.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 102 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.715
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.013
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.005
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.838494900Z",
+        "finished_at": null
+      }
+    }
+  ],
+  "completed_interview": {
+    "id": "f9f2a7f4-6e8d-4ad6-95b9-f4de95e68af8",
+    "role": "Backend Developer",
+    "topic": null,
+    "difficulty": null,
+    "status": "completed",
+    "questions": [
+      {
+        "id": "batches",
+        "role": "Backend Developer",
+        "topic": "JavaScript",
+        "difficulty": "beginner",
+        "question": "Create a function `batches` that returns the maximum number of whole batches that can be cooked from a recipe.\n\n```js\n/**\nIt accepts two objects as arguments: the first object is the recipe\nfor the food, while the second object is the available ingredients.\nEach ingredient's value is a number representing how many units there are.\n\n`batches(recipe, available)`\n*/\n\n// 0 batches can be made\nbatches(\n  { milk: 100, butter: 50, flour: 5 },\n  { milk: 132, butter: 48, flour: 51 }\n)\nbatches(\n  { milk: 100, flour: 4, sugar: 10, butter: 5 },\n  { milk: 1288, flour: 9, sugar: 95 }\n)\n\n// 1 batch can be made\nbatches(\n  { milk: 100, butter: 50, cheese: 10 },\n  { milk: 198, butter: 52, cheese: 10 }\n)\n\n// 2 batches can be made\nbatches(\n  { milk: 2, sugar: 40, butter: 20 },\n  { milk: 5, sugar: 120, butter: 500 }\n)\n```",
+        "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+        "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+        "concepts": [
+          "available",
+          "batch",
+          "batches",
+          "each",
+          "ingredient"
+        ],
+        "source": {
+          "id": "30-seconds",
+          "title": "30 seconds of interviews",
+          "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+          "license": "MIT",
+          "locator": "questions/batches.md @ da235b618572"
+        }
+      },
+      {
+        "id": "callback-hell",
+        "role": "Backend Developer",
+        "topic": "Node.js",
+        "difficulty": "intermediate",
+        "question": "How can you avoid callback hells?\n\n```js\ngetData(function(a) {\n  getMoreData(a, function(b) {\n    getMoreData(b, function(c) {\n      getMoreData(c, function(d) {\n        getMoreData(d, function(e) {\n          // ...\n        })\n      })\n    })\n  })\n})\n```",
+        "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+        "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+        "concepts": [
+          "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+        ],
+        "source": {
+          "id": "30-seconds",
+          "title": "30 seconds of interviews",
+          "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+          "license": "MIT",
+          "locator": "questions/callback-hell.md @ da235b618572"
+        }
+      },
+      {
+        "id": "xss",
+        "role": "Backend Developer",
+        "topic": "Security",
+        "difficulty": "beginner",
+        "question": "What is a cross-site scripting attack (XSS) and how do you prevent it?",
+        "answer": "XSS refers to client-side code injection where the attacker injects malicious scripts into a legitimate website or web application. This is often achieved when the application does not validate user input and freely injects dynamic HTML content.\n\nFor example, a comment system will be at risk if it does not validate or escape user input. If the comment contains unescaped HTML, the comment can inject a `<script>` tag into the website that other users will execute against their knowledge.\n\n* The malicious script has access to cookies which are often used to store session tokens. If an attacker can obtain a user’s session cookie, they can impersonate the user.\n* The script can arbitrarily manipulate the DOM of the page the script is executing in, allowing the attacker to insert pieces of content that appear to be a real part of the website.\n* The script can use AJAX to send HTTP requests with arbitrary content to arbitrary destinations.",
+        "follow_up": "Apply this idea to a small example. Explain On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it in your own words.",
+        "concepts": [
+          "On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it.",
+          "On the server, escaping HTML tags will prevent the browser from parsing the user input as actual HTML and therefore won't execute the script."
+        ],
+        "source": {
+          "id": "30-seconds",
+          "title": "30 seconds of interviews",
+          "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/xss.md",
+          "license": "MIT",
+          "locator": "questions/xss.md @ da235b618572"
+        }
+      },
+      {
+        "id": "big-o-notation",
+        "role": "Backend Developer",
+        "topic": "JavaScript",
+        "difficulty": "intermediate",
+        "question": "What is Big O Notation?",
+        "answer": "Big O notation is used in Computer Science to describe the time complexity of an algorithm. The best algorithms will execute the fastest and have the simplest complexity.\n\nAlgorithms don't always perform the same and may vary based on the data they are supplied. While in some cases they will execute quickly, in other cases they will execute slowly, even with the same number of elements to deal with.\n\nIn these examples, the base time is 1 element = `1ms`.\n\n##### O(1)\n\n```js\narr[arr.length - 1]\n```\n\n* 1000 elements = `1ms`\n\nConstant time complexity. No matter how many elements the array has, it will theoretically take (excluding real-world variation) the same amount of time to execute.\n\n##### O(N)\n\n```js\narr.filter(fn)\n```\n\n* 1000 elements = `1000ms`\n\nLinear time complexity. The execution time will increase linearly with the number of elements the array has. If the array has 1000 elements and the function takes 1ms to execute, 7000 elements will take 7ms to execute. This is because the function must iterate through all elements of the array before returning a result.\n\n##### O([1, N])\n\n```js\narr.some(fn)\n```\n\n* 1000 elements = `1ms <= x <= 1000ms`\n\nThe execution time varies depending on the data supplied to the function, it may return very early or very late. The best case here is O(1) and the worst case is O(N).\n\n##### O(NlogN)\n\n```js\narr.sort(fn)\n```\n\n* 1000 elements ~= `10000ms`\n\nBrowsers usually implement the quicksort algorithm for the `sort()` method and the average time complexity of quicksort is O(NlgN). This is very efficient for large collections.\n\n##### O(N^2)\n\n```js\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; j < arr.length; j++) {\n    // ...\n  }\n}\n```\n\n* 1000 elements = `1000000ms`\n\nThe execution time rises quadratically with the number of elements. Usually the result of nesting loops.\n\n##### O(N!)\n\n```js\nconst permutations = arr => {\n  if (arr.length <= 2) return arr.length === 2 ? [arr, [arr[1], arr[0]]] : arr\n  return arr.reduce(\n    (acc, item, i) =>\n      acc.concat(\n        permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map(val => [\n          item,\n          ...val\n        ])\n      ),\n    []\n  )\n}\n```\n\n* 1000 elements = `Infinity` (practically) ms\n\nThe execution time rises extremely fast with even just 1 addition to the array.",
+        "follow_up": "Apply this idea to a small example. Explain Be wary of nesting loops as execution time increases exponentially in your own words.",
+        "concepts": [
+          "Be wary of nesting loops as execution time increases exponentially."
+        ],
+        "source": {
+          "id": "30-seconds",
+          "title": "30 seconds of interviews",
+          "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/big-o-notation.md",
+          "license": "MIT",
+          "locator": "questions/big-o-notation.md @ da235b618572"
+        }
+      },
+      {
+        "id": "node-error-first-callback",
+        "role": "Backend Developer",
+        "topic": "Node.js",
+        "difficulty": "beginner",
+        "question": "NodeJS often uses a callback pattern where if an error is encountered during execution, this error is passed as the first argument to the callback. What are the advantages of this pattern?\n\n```js\nfs.readFile(filePath, function(err, data) {\n  if (err) {\n    // handle the error, the return is important here\n    // so execution stops here\n    return console.log(err)\n  }\n  // use the data object\n  console.log(data)\n})\n```",
+        "answer": "Advantages include:\n\n* Not needing to process data if there is no need to even reference it\n* Having a consistent API leads to more adoption\n* Ability to easily adapt a callback pattern that will lead to more maintainable code\n\nAs you can see from below example, the callback is called with null as its first argument if there is no error. However, if there is an error, you create an Error object, which then becomes the callback's only parameter. The callback function allows a user to easily know whether or not an error occurred.\n\nThis practice is also called the _Node.js error convention_, and this kind of callback implementations are called _error-first callbacks_.\n\n```js\nvar isTrue = function(value, callback) {\n  if (value === true) {\n    callback(null, \"Value was true.\")\n  } else {\n    callback(new Error(\"Value is not true!\"))\n  }\n}\n\nvar callback = function(error, retval) {\n  if (error) {\n    console.log(error)\n    return\n  }\n  console.log(retval)\n}\n\nisTrue(false, callback)\nisTrue(true, callback)\n\n/*\n  { stack: [Getter/Setter],\n    arguments: undefined,\n    type: undefined,\n    message: 'Value is not true!' }\n  Value was true.\n*/\n```",
+        "follow_up": "Apply this idea to a small example. Explain This is just a convention. However, you should stick to it in your own words.",
+        "concepts": [
+          "This is just a convention. However, you should stick to it."
+        ],
+        "source": {
+          "id": "30-seconds",
+          "title": "30 seconds of interviews",
+          "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/node-error-first-callback.md",
+          "license": "MIT",
+          "locator": "questions/node-error-first-callback.md @ da235b618572"
+        }
+      }
+    ],
+    "turns": [
+      {
+        "answered_at": "2026-11-16T16:29:01.863431700Z",
+        "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+        "evaluation": {
+          "score": 100,
+          "accuracy": 100,
+          "completeness": 100,
+          "clarity": 100,
+          "matched_concepts": [
+            "available",
+            "batch",
+            "batches",
+            "each",
+            "ingredient"
+          ],
+          "missing_concepts": [],
+          "feedback": [
+            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+            "Matched 5 of 5 source concepts; clarity estimates answer length (20 words reaches 100).",
+            "All rubric concepts were mentioned. Check your explanation against the cited reference."
+          ],
+          "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+          "mode": "demo",
+          "source": {
+            "id": "30-seconds",
+            "title": "30 seconds of interviews",
+            "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+            "license": "MIT",
+            "locator": "questions/batches.md @ da235b618572"
+          }
+        },
+        "question_id": "batches"
+      },
+      {
+        "answered_at": "2026-11-16T16:29:01.882548900Z",
+        "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+        "evaluation": {
+          "score": 0,
+          "accuracy": 0,
+          "completeness": 0,
+          "clarity": 0,
+          "matched_concepts": [],
+          "missing_concepts": [
+            "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+          ],
+          "feedback": [
+            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+            "Matched 0 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+            "Add the missing source concepts and a concrete example."
+          ],
+          "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+          "mode": "demo",
+          "source": {
+            "id": "30-seconds",
+            "title": "30 seconds of interviews",
+            "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+            "license": "MIT",
+            "locator": "questions/callback-hell.md @ da235b618572"
+          }
+        },
+        "question_id": "callback-hell"
+      },
+      {
+        "answered_at": "2026-11-16T16:29:01.900084600Z",
+        "answer": "XSS refers to client-side code injection where the attacker injects malicious scripts into a legitimate website or web application. This is often achieved when the application does not validate user input and freely injects dynamic HTML content.\n\nFor example, a comment system will be at risk if it does not validate or escape user input. If the comment contains unescaped HTML, the comment can inject a `<script>` tag into the website that other users will execute against their knowledge.\n\n* The malicious script has access to cookies which are often used to store session tokens. If an attacker can obtain a user’s session cookie, they can impersonate the user.\n* The script can arbitrarily manipulate the DOM of the page the script is executing in, allowing the attacker to insert pieces of content that appear to be a real part of the website.\n* The script can use AJAX to send HTTP requests with arbitrary content to arbitrary destinations.",
+        "evaluation": {
+          "score": 0,
+          "accuracy": 0,
+          "completeness": 0,
+          "clarity": 0,
+          "matched_concepts": [],
+          "missing_concepts": [
+            "On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it.",
+            "On the server, escaping HTML tags will prevent the browser from parsing the user input as actual HTML and therefore won't execute the script."
+          ],
+          "feedback": [
+            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+            "Matched 0 of 2 source concepts; clarity estimates answer length (20 words reaches 100).",
+            "Add the missing source concepts and a concrete example."
+          ],
+          "follow_up": "Apply this idea to a small example. Explain On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it in your own words.",
+          "mode": "demo",
+          "source": {
+            "id": "30-seconds",
+            "title": "30 seconds of interviews",
+            "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/xss.md",
+            "license": "MIT",
+            "locator": "questions/xss.md @ da235b618572"
+          }
+        },
+        "question_id": "xss"
+      },
+      {
+        "answered_at": "2026-11-16T16:29:01.916099100Z",
+        "answer": "Big O notation is used in Computer Science to describe the time complexity of an algorithm. The best algorithms will execute the fastest and have the simplest complexity.\n\nAlgorithms don't always perform the same and may vary based on the data they are supplied. While in some cases they will execute quickly, in other cases they will execute slowly, even with the same number of elements to deal with.\n\nIn these examples, the base time is 1 element = `1ms`.\n\n##### O(1)\n\n```js\narr[arr.length - 1]\n```\n\n* 1000 elements = `1ms`\n\nConstant time complexity. No matter how many elements the array has, it will theoretically take (excluding real-world variation) the same amount of time to execute.\n\n##### O(N)\n\n```js\narr.filter(fn)\n```\n\n* 1000 elements = `1000ms`\n\nLinear time complexity. The execution time will increase linearly with the number of elements the array has. If the array has 1000 elements and the function takes 1ms to execute, 7000 elements will take 7ms to execute. This is because the function must iterate through all elements of the array before returning a result.\n\n##### O([1, N])\n\n```js\narr.some(fn)\n```\n\n* 1000 elements = `1ms <= x <= 1000ms`\n\nThe execution time varies depending on the data supplied to the function, it may return very early or very late. The best case here is O(1) and the worst case is O(N).\n\n##### O(NlogN)\n\n```js\narr.sort(fn)\n```\n\n* 1000 elements ~= `10000ms`\n\nBrowsers usually implement the quicksort algorithm for the `sort()` method and the average time complexity of quicksort is O(NlgN). This is very efficient for large collections.\n\n##### O(N^2)\n\n```js\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; j < arr.length; j++) {\n    // ...\n  }\n}\n```\n\n* 1000 elements = `1000000ms`\n\nThe execution time rises quadratically with the number of elements. Usually the result of nesting loops.\n\n##### O(N!)\n\n```js\nconst permutations = arr => {\n  if (arr.length <= 2) return arr.length === 2 ? [arr, [arr[1], arr[0]]] : arr\n  return arr.reduce(\n    (acc, item, i) =>\n      acc.concat(\n        permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map(val => [\n          item,\n          ...val\n        ])\n      ),\n    []\n  )\n}\n```\n\n* 1000 elements = `Infinity` (practically) ms\n\nThe execution time rises extremely fast with even just 1 addition to the array.",
+        "evaluation": {
+          "score": 100,
+          "accuracy": 100,
+          "completeness": 100,
+          "clarity": 100,
+          "matched_concepts": [
+            "Be wary of nesting loops as execution time increases exponentially."
+          ],
+          "missing_concepts": [],
+          "feedback": [
+            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+            "Matched 1 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+            "All rubric concepts were mentioned. Check your explanation against the cited reference."
+          ],
+          "follow_up": "Apply this idea to a small example. Explain Be wary of nesting loops as execution time increases exponentially in your own words.",
+          "mode": "demo",
+          "source": {
+            "id": "30-seconds",
+            "title": "30 seconds of interviews",
+            "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/big-o-notation.md",
+            "license": "MIT",
+            "locator": "questions/big-o-notation.md @ da235b618572"
+          }
+        },
+        "question_id": "big-o-notation"
+      },
+      {
+        "answered_at": "2026-11-16T16:29:01.935093700Z",
+        "answer": "Advantages include:\n\n* Not needing to process data if there is no need to even reference it\n* Having a consistent API leads to more adoption\n* Ability to easily adapt a callback pattern that will lead to more maintainable code\n\nAs you can see from below example, the callback is called with null as its first argument if there is no error. However, if there is an error, you create an Error object, which then becomes the callback's only parameter. The callback function allows a user to easily know whether or not an error occurred.\n\nThis practice is also called the _Node.js error convention_, and this kind of callback implementations are called _error-first callbacks_.\n\n```js\nvar isTrue = function(value, callback) {\n  if (value === true) {\n    callback(null, \"Value was true.\")\n  } else {\n    callback(new Error(\"Value is not true!\"))\n  }\n}\n\nvar callback = function(error, retval) {\n  if (error) {\n    console.log(error)\n    return\n  }\n  console.log(retval)\n}\n\nisTrue(false, callback)\nisTrue(true, callback)\n\n/*\n  { stack: [Getter/Setter],\n    arguments: undefined,\n    type: undefined,\n    message: 'Value is not true!' }\n  Value was true.\n*/\n```",
+        "evaluation": {
+          "score": 0,
+          "accuracy": 0,
+          "completeness": 0,
+          "clarity": 0,
+          "matched_concepts": [],
+          "missing_concepts": [
+            "This is just a convention. However, you should stick to it."
+          ],
+          "feedback": [
+            "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+            "Matched 0 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+            "Add the missing source concepts and a concrete example."
+          ],
+          "follow_up": "Apply this idea to a small example. Explain This is just a convention. However, you should stick to it in your own words.",
+          "mode": "demo",
+          "source": {
+            "id": "30-seconds",
+            "title": "30 seconds of interviews",
+            "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/node-error-first-callback.md",
+            "license": "MIT",
+            "locator": "questions/node-error-first-callback.md @ da235b618572"
+          }
+        },
+        "question_id": "node-error-first-callback"
+      }
+    ],
+    "trace": [
+      {
+        "step": "retrieve",
+        "status": "completed",
+        "detail": "Retrieved 55 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+        "duration_ms": 0.365
+      },
+      {
+        "step": "select_five",
+        "status": "completed",
+        "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+        "duration_ms": 0.009
+      },
+      {
+        "step": "study_plan",
+        "status": "completed",
+        "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+        "duration_ms": 0.007
+      }
+    ],
+    "mode": "demo",
+    "created_at": "2026-11-16T16:29:01.802485Z",
+    "finished_at": "2026-11-16T16:29:01.947104600Z"
+  },
+  "analytics": {
+    "interviews_completed": 1,
+    "questions_practiced": 5,
+    "average_score": 40,
+    "streak": 1,
+    "topics_covered": 3,
+    "score_trend": [
+      {
+        "score": 40,
+        "date": "2026-11-16"
+      }
+    ],
+    "recent_interviews": [
+      {
+        "id": "e71577df-78e3-4db4-b60a-b7824d8e93d8",
+        "role": "Frontend Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "active",
+        "questions": [
+          {
+            "id": "accessibility-aria",
+            "role": "Frontend Developer",
+            "topic": "Accessibility",
+            "difficulty": "beginner",
+            "question": "What is ARIA and when should you use it?",
+            "answer": "ARIA stands for \"Accessible Rich Internet Applications\", and is a technical specification created by the World Wide Web Consortium (W3C). Better known as WAI-ARIA, it provides additional HTML attributes in the development of web applications to offer people who use assistive technologies (AT) a more robust and interoperable experience with dynamic components. By providing the component's role, name, and state, AT users can better understand how to interact with the component. WAI-ARIA should only be used when an HTML element equivalent is not available or lacks full browser or AT support. WAI-ARIA's semantic markup coupled with JavaScript works to provide an understandable and interactive experience for people who use AT.\n\nAn example using ARIA:\n\n```\n<div \n  role=\"combobox\"\n  aria-expanded=\"false\"\n  aria-owns=\"ex1-grid\"\n  aria-haspopup=\"grid\"\n  id=\"ex1-combobox\">\n  ...\n</div>\n```\nCredit: W3C's [ARIA 1.1 Combobox with Grid Popup Example](https://w3c.github.io/aria-practices/examples/combobox/aria1.1pattern/grid-combo.html)",
+            "follow_up": "Apply this idea to a small example. Explain Accessible Rich Internet Applications in your own words.",
+            "concepts": [
+              "Accessible Rich Internet Applications",
+              "Benefits people who use assistive technologies (AT)",
+              "Provides role, name, and state",
+              "Semantic HTML coupled with JavaScript"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/accessibility-aria.md",
+              "license": "MIT",
+              "locator": "questions/accessibility-aria.md @ da235b618572"
+            }
+          },
+          {
+            "id": "alt-attribute",
+            "role": "Frontend Developer",
+            "topic": "HTML",
+            "difficulty": "beginner",
+            "question": "What is the purpose of the `alt` attribute on images?",
+            "answer": "The `alt` attribute provides alternative information for an image if a user cannot view it. The `alt` attribute should be used to describe any images except those which only serve a decorative purpose, in which case it should be left empty.",
+            "follow_up": "Apply this idea to a small example. Explain Decorative images should have an empty `alt` attribute in your own words.",
+            "concepts": [
+              "Decorative images should have an empty `alt` attribute.",
+              "Web crawlers use `alt` tags to understand image content, so they are considered important for Search Engine Optimization (SEO).",
+              "Put the `.` at the end of `alt` tag to improve accessibility."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/alt-attribute.md",
+              "license": "MIT",
+              "locator": "questions/alt-attribute.md @ da235b618572"
+            }
+          },
+          {
+            "id": "batches",
+            "role": "Frontend Developer",
+            "topic": "JavaScript",
+            "difficulty": "beginner",
+            "question": "Create a function `batches` that returns the maximum number of whole batches that can be cooked from a recipe.\n\n```js\n/**\nIt accepts two objects as arguments: the first object is the recipe\nfor the food, while the second object is the available ingredients.\nEach ingredient's value is a number representing how many units there are.\n\n`batches(recipe, available)`\n*/\n\n// 0 batches can be made\nbatches(\n  { milk: 100, butter: 50, flour: 5 },\n  { milk: 132, butter: 48, flour: 51 }\n)\nbatches(\n  { milk: 100, flour: 4, sugar: 10, butter: 5 },\n  { milk: 1288, flour: 9, sugar: 95 }\n)\n\n// 1 batch can be made\nbatches(\n  { milk: 100, butter: 50, cheese: 10 },\n  { milk: 198, butter: 52, cheese: 10 }\n)\n\n// 2 batches can be made\nbatches(\n  { milk: 2, sugar: 40, butter: 20 },\n  { milk: 5, sugar: 120, butter: 500 }\n)\n```",
+            "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+            "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+            "concepts": [
+              "available",
+              "batch",
+              "batches",
+              "each",
+              "ingredient"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+              "license": "MIT",
+              "locator": "questions/batches.md @ da235b618572"
+            }
+          },
+          {
+            "id": "bem",
+            "role": "Frontend Developer",
+            "topic": "CSS",
+            "difficulty": "beginner",
+            "question": "What is CSS BEM?",
+            "answer": "The BEM methodology is a naming convention for CSS classes in order to keep CSS more maintainable by defining namespaces to solve scoping issues. BEM stands for Block Element Modifier which is an explanation for its structure. A Block is a standalone component that is reusable across projects and acts as a \"namespace\" for sub components (Elements). Modifiers are used as flags when a Block or Element is in a certain state or is different in structure or style.\n\n```css\n/* block component */\n.block {\n}\n\n/* element */\n.block__element {\n}\n\n/* modifier */\n.block__element--modifier {\n}\n```\n\nHere is an example with the class names on markup:\n\n```html\n<nav class=\"navbar\">\n  <a href=\"/\" class=\"navbar__link navbar__link--active\"></a>\n  <a href=\"/\" class=\"navbar__link\"></a>\n  <a href=\"/\" class=\"navbar__link\"></a>\n</nav>\n```\n\nIn this case, `navbar` is the Block, `navbar__link` is an Element that makes no sense outside of the `navbar` component, and `navbar__link--active` is a Modifier that indicates a different state for the `navbar__link` Element.\n\nSince Modifiers are verbose, many opt to use `is-*` flags instead as modifiers.\n\n```html\n<a href=\"/\" class=\"navbar__link is-active\"></a>\n```\n\nThese must be chained to the Element and never alone however, or there will be scope issues.\n\n```css\n.navbar__link.is-active {\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Alternative solutions to scope issues like CSS-in-JS in your own words.",
+            "concepts": [
+              "Alternative solutions to scope issues like CSS-in-JS"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/bem.md",
+              "license": "MIT",
+              "locator": "questions/bem.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-hell",
+            "role": "Frontend Developer",
+            "topic": "Node.js",
+            "difficulty": "intermediate",
+            "question": "How can you avoid callback hells?\n\n```js\ngetData(function(a) {\n  getMoreData(a, function(b) {\n    getMoreData(b, function(c) {\n      getMoreData(c, function(d) {\n        getMoreData(d, function(e) {\n          // ...\n        })\n      })\n    })\n  })\n})\n```",
+            "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+            "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+            "concepts": [
+              "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+              "license": "MIT",
+              "locator": "questions/callback-hell.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 102 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.715
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.013
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.005
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.838495Z",
+        "finished_at": null
+      },
+      {
+        "id": "94e74225-9b0c-4086-8fd1-7149964e79fe",
+        "role": "React Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "active",
+        "questions": [
+          {
+            "id": "callback-in-setState",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "beginner",
+            "question": "What is the purpose of callback function as an argument of `setState`?",
+            "answer": "The callback function is invoked when `setState` has finished and the component gets rendered. Since `setState` is asynchronous, the callback function is used for any post action.\n\n```js\nsetState({ name: \"sudheer\" }, () => {\n  console.log(\"The name has updated and component re-rendered\")\n})\n```",
+            "follow_up": "Apply this idea to a small example. Explain The callback function is invoked after `setState` finishes and is used for any post action in your own words.",
+            "concepts": [
+              "The callback function is invoked after `setState` finishes and is used for any post action.",
+              "It is recommended to use lifecycle method rather this callback function."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-in-setState.md",
+              "license": "MIT",
+              "locator": "questions/callback-in-setState.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-refs-vs-finddomnode",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "Which is the preferred option between callback refs and findDOMNode()?",
+            "answer": "Callback refs are preferred over the `findDOMNode()` API, due to the fact that `findDOMNode()` prevents certain improvements in React in the future.\n\n```js\n// Legacy approach using findDOMNode()\nclass MyComponent extends Component {\n  componentDidMount() {\n    findDOMNode(this).scrollIntoView()\n  }\n\n  render() {\n    return <div />\n  }\n}\n\n// Recommended approach using callback refs\nclass MyComponent extends Component {\n  componentDidMount() {\n    this.node.scrollIntoView()\n  }\n\n  render() {\n    return <div ref={node => (this.node = node)} />\n  }\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Callback refs are preferred over `findDOMNode()` in your own words.",
+            "concepts": [
+              "Callback refs are preferred over `findDOMNode()`."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-refs-vs-finddomnode.md",
+              "license": "MIT",
+              "locator": "questions/callback-refs-vs-finddomnode.md @ da235b618572"
+            }
+          },
+          {
+            "id": "children-prop",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "What is the `children` prop?",
+            "answer": "`children` is part of the props object passed to components that allows components to be passed as data to other components, providing the ability to compose components cleanly. There are a number of methods available in the React API to work with this prop, such as `React.Children.map`, `React.Children.forEach`, `React.Children.count`, `React.Children.only` and `React.Children.toArray`. A simple usage example of the children prop is as follows:\n\n```js\nfunction GenericBox({ children }) {\n  return <div className=\"container\">{children}</div>\n}\n\nfunction App() {\n  return (\n    <GenericBox>\n      <span>Hello</span> <span>World</span>\n    </GenericBox>\n  )\n}\n```",
+            "follow_up": "Apply this idea to a small example. Explain Children is a prop that allows components to be passed as data to other components in your own words.",
+            "concepts": [
+              "Children is a prop that allows components to be passed as data to other components.",
+              "The React API provides methods to work with this prop."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/children-prop.md",
+              "license": "MIT",
+              "locator": "questions/children-prop.md @ da235b618572"
+            }
+          },
+          {
+            "id": "class-name",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "beginner",
+            "question": "Why does React use `className` instead of `class` like in HTML?",
+            "answer": "React's philosophy in the beginning was to align with the browser DOM API rather than HTML, since that more closely represents how elements are created. Setting a `class` on an element meant using the `className` API:\n\n```js\nconst element = document.createElement(\"div\")\nelement.className = \"hello\"\n```\n\nAdditionally, before ES5, reserved words could not be used in objects:\n\n```js\nconst element = {\n  attributes: {\n    class: \"hello\"\n  }\n}\n```\n\nIn IE8, this will throw an error.\n\nIn modern environments, destructuring will throw an error if trying to assign to a variable:\n\n```js\nconst { class } = this.props // Error\nconst { className } = this.props // All good\nconst { class: className } = this.props // All good, but cumbersome!\n```\n\nHowever, `class` _can_ be used as a prop without problems, as seen in other libraries like Preact. React currently allows you to use `class`, but will throw a warning and convert it to `className` under the hood. There is currently an open thread (as of January 2019) discussing changing `className` to `class` to reduce confusion.",
+            "follow_up": "Apply this idea to a small example. Explain class in your own words.",
+            "concepts": [
+              "class",
+              "classname",
+              "html",
+              "like",
+              "react"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/class-name.md",
+              "license": "MIT",
+              "locator": "questions/class-name.md @ da235b618572"
+            }
+          },
+          {
+            "id": "context",
+            "role": "React Developer",
+            "topic": "React",
+            "difficulty": "intermediate",
+            "question": "What is context?",
+            "answer": "Context provides a way to pass data through the component tree without having to pass props down manually at every level. For example, authenticated user, locale preference, UI theme need to be accessed in the application by many components.\n\n```js\nconst { Provider, Consumer } = React.createContext(defaultValue)\n```",
+            "follow_up": "Apply this idea to a small example. Explain Context provides a way to pass data through a tree of React components, without having to manually pass props in your own words.",
+            "concepts": [
+              "Context provides a way to pass data through a tree of React components, without having to manually pass props.",
+              "Context is designed to share data that is considered _global_ for a tree of React components."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/context.md",
+              "license": "MIT",
+              "locator": "questions/context.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 24 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.117
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.007
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.004
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.821489Z",
+        "finished_at": null
+      },
+      {
+        "id": "f9f2a7f4-6e8d-4ad6-95b9-f4de95e68af8",
+        "role": "Backend Developer",
+        "topic": null,
+        "difficulty": null,
+        "status": "completed",
+        "questions": [
+          {
+            "id": "batches",
+            "role": "Backend Developer",
+            "topic": "JavaScript",
+            "difficulty": "beginner",
+            "question": "Create a function `batches` that returns the maximum number of whole batches that can be cooked from a recipe.\n\n```js\n/**\nIt accepts two objects as arguments: the first object is the recipe\nfor the food, while the second object is the available ingredients.\nEach ingredient's value is a number representing how many units there are.\n\n`batches(recipe, available)`\n*/\n\n// 0 batches can be made\nbatches(\n  { milk: 100, butter: 50, flour: 5 },\n  { milk: 132, butter: 48, flour: 51 }\n)\nbatches(\n  { milk: 100, flour: 4, sugar: 10, butter: 5 },\n  { milk: 1288, flour: 9, sugar: 95 }\n)\n\n// 1 batch can be made\nbatches(\n  { milk: 100, butter: 50, cheese: 10 },\n  { milk: 198, butter: 52, cheese: 10 }\n)\n\n// 2 batches can be made\nbatches(\n  { milk: 2, sugar: 40, butter: 20 },\n  { milk: 5, sugar: 120, butter: 500 }\n)\n```",
+            "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+            "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+            "concepts": [
+              "available",
+              "batch",
+              "batches",
+              "each",
+              "ingredient"
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+              "license": "MIT",
+              "locator": "questions/batches.md @ da235b618572"
+            }
+          },
+          {
+            "id": "callback-hell",
+            "role": "Backend Developer",
+            "topic": "Node.js",
+            "difficulty": "intermediate",
+            "question": "How can you avoid callback hells?\n\n```js\ngetData(function(a) {\n  getMoreData(a, function(b) {\n    getMoreData(b, function(c) {\n      getMoreData(c, function(d) {\n        getMoreData(d, function(e) {\n          // ...\n        })\n      })\n    })\n  })\n})\n```",
+            "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+            "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+            "concepts": [
+              "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+              "license": "MIT",
+              "locator": "questions/callback-hell.md @ da235b618572"
+            }
+          },
+          {
+            "id": "xss",
+            "role": "Backend Developer",
+            "topic": "Security",
+            "difficulty": "beginner",
+            "question": "What is a cross-site scripting attack (XSS) and how do you prevent it?",
+            "answer": "XSS refers to client-side code injection where the attacker injects malicious scripts into a legitimate website or web application. This is often achieved when the application does not validate user input and freely injects dynamic HTML content.\n\nFor example, a comment system will be at risk if it does not validate or escape user input. If the comment contains unescaped HTML, the comment can inject a `<script>` tag into the website that other users will execute against their knowledge.\n\n* The malicious script has access to cookies which are often used to store session tokens. If an attacker can obtain a user’s session cookie, they can impersonate the user.\n* The script can arbitrarily manipulate the DOM of the page the script is executing in, allowing the attacker to insert pieces of content that appear to be a real part of the website.\n* The script can use AJAX to send HTTP requests with arbitrary content to arbitrary destinations.",
+            "follow_up": "Apply this idea to a small example. Explain On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it in your own words.",
+            "concepts": [
+              "On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it.",
+              "On the server, escaping HTML tags will prevent the browser from parsing the user input as actual HTML and therefore won't execute the script."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/xss.md",
+              "license": "MIT",
+              "locator": "questions/xss.md @ da235b618572"
+            }
+          },
+          {
+            "id": "big-o-notation",
+            "role": "Backend Developer",
+            "topic": "JavaScript",
+            "difficulty": "intermediate",
+            "question": "What is Big O Notation?",
+            "answer": "Big O notation is used in Computer Science to describe the time complexity of an algorithm. The best algorithms will execute the fastest and have the simplest complexity.\n\nAlgorithms don't always perform the same and may vary based on the data they are supplied. While in some cases they will execute quickly, in other cases they will execute slowly, even with the same number of elements to deal with.\n\nIn these examples, the base time is 1 element = `1ms`.\n\n##### O(1)\n\n```js\narr[arr.length - 1]\n```\n\n* 1000 elements = `1ms`\n\nConstant time complexity. No matter how many elements the array has, it will theoretically take (excluding real-world variation) the same amount of time to execute.\n\n##### O(N)\n\n```js\narr.filter(fn)\n```\n\n* 1000 elements = `1000ms`\n\nLinear time complexity. The execution time will increase linearly with the number of elements the array has. If the array has 1000 elements and the function takes 1ms to execute, 7000 elements will take 7ms to execute. This is because the function must iterate through all elements of the array before returning a result.\n\n##### O([1, N])\n\n```js\narr.some(fn)\n```\n\n* 1000 elements = `1ms <= x <= 1000ms`\n\nThe execution time varies depending on the data supplied to the function, it may return very early or very late. The best case here is O(1) and the worst case is O(N).\n\n##### O(NlogN)\n\n```js\narr.sort(fn)\n```\n\n* 1000 elements ~= `10000ms`\n\nBrowsers usually implement the quicksort algorithm for the `sort()` method and the average time complexity of quicksort is O(NlgN). This is very efficient for large collections.\n\n##### O(N^2)\n\n```js\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; j < arr.length; j++) {\n    // ...\n  }\n}\n```\n\n* 1000 elements = `1000000ms`\n\nThe execution time rises quadratically with the number of elements. Usually the result of nesting loops.\n\n##### O(N!)\n\n```js\nconst permutations = arr => {\n  if (arr.length <= 2) return arr.length === 2 ? [arr, [arr[1], arr[0]]] : arr\n  return arr.reduce(\n    (acc, item, i) =>\n      acc.concat(\n        permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map(val => [\n          item,\n          ...val\n        ])\n      ),\n    []\n  )\n}\n```\n\n* 1000 elements = `Infinity` (practically) ms\n\nThe execution time rises extremely fast with even just 1 addition to the array.",
+            "follow_up": "Apply this idea to a small example. Explain Be wary of nesting loops as execution time increases exponentially in your own words.",
+            "concepts": [
+              "Be wary of nesting loops as execution time increases exponentially."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/big-o-notation.md",
+              "license": "MIT",
+              "locator": "questions/big-o-notation.md @ da235b618572"
+            }
+          },
+          {
+            "id": "node-error-first-callback",
+            "role": "Backend Developer",
+            "topic": "Node.js",
+            "difficulty": "beginner",
+            "question": "NodeJS often uses a callback pattern where if an error is encountered during execution, this error is passed as the first argument to the callback. What are the advantages of this pattern?\n\n```js\nfs.readFile(filePath, function(err, data) {\n  if (err) {\n    // handle the error, the return is important here\n    // so execution stops here\n    return console.log(err)\n  }\n  // use the data object\n  console.log(data)\n})\n```",
+            "answer": "Advantages include:\n\n* Not needing to process data if there is no need to even reference it\n* Having a consistent API leads to more adoption\n* Ability to easily adapt a callback pattern that will lead to more maintainable code\n\nAs you can see from below example, the callback is called with null as its first argument if there is no error. However, if there is an error, you create an Error object, which then becomes the callback's only parameter. The callback function allows a user to easily know whether or not an error occurred.\n\nThis practice is also called the _Node.js error convention_, and this kind of callback implementations are called _error-first callbacks_.\n\n```js\nvar isTrue = function(value, callback) {\n  if (value === true) {\n    callback(null, \"Value was true.\")\n  } else {\n    callback(new Error(\"Value is not true!\"))\n  }\n}\n\nvar callback = function(error, retval) {\n  if (error) {\n    console.log(error)\n    return\n  }\n  console.log(retval)\n}\n\nisTrue(false, callback)\nisTrue(true, callback)\n\n/*\n  { stack: [Getter/Setter],\n    arguments: undefined,\n    type: undefined,\n    message: 'Value is not true!' }\n  Value was true.\n*/\n```",
+            "follow_up": "Apply this idea to a small example. Explain This is just a convention. However, you should stick to it in your own words.",
+            "concepts": [
+              "This is just a convention. However, you should stick to it."
+            ],
+            "source": {
+              "id": "30-seconds",
+              "title": "30 seconds of interviews",
+              "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/node-error-first-callback.md",
+              "license": "MIT",
+              "locator": "questions/node-error-first-callback.md @ da235b618572"
+            }
+          }
+        ],
+        "turns": [
+          {
+            "answered_at": "2026-11-16T16:29:01.863431700Z",
+            "answer": "We must have all ingredients of the recipe available, and in quantities that are more than or equal to the number of units required. If just one of the ingredients is not available or lower than needed, we cannot make a single batch.\n\nUse `Object.keys()` to return the ingredients of the recipe as an array, then use `Array.prototype.map()` to map each ingredient to the ratio of available units to the amount required by the recipe. If one of the ingredients required by the recipe is not available at all, the ratio will evaluate to `NaN`, so the logical OR operator can be used to fallback to `0` in this case.\n\nUse the spread `...` operator to feed the array of all the ingredient ratios into `Math.min()` to determine the lowest ratio. Passing this entire result into `Math.floor()` rounds down to return the maximum number of whole batches.\n\n```js\nconst batches = (recipe, available) =>\n  Math.floor(\n    Math.min(...Object.keys(recipe).map(k => available[k] / recipe[k] || 0))\n  )\n```",
+            "evaluation": {
+              "score": 100,
+              "accuracy": 100,
+              "completeness": 100,
+              "clarity": 100,
+              "matched_concepts": [
+                "available",
+                "batch",
+                "batches",
+                "each",
+                "ingredient"
+              ],
+              "missing_concepts": [],
+              "feedback": [
+                "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                "Matched 5 of 5 source concepts; clarity estimates answer length (20 words reaches 100).",
+                "All rubric concepts were mentioned. Check your explanation against the cited reference."
+              ],
+              "follow_up": "Apply this idea to a small example. Explain available in your own words.",
+              "mode": "demo",
+              "source": {
+                "id": "30-seconds",
+                "title": "30 seconds of interviews",
+                "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/batches.md",
+                "license": "MIT",
+                "locator": "questions/batches.md @ da235b618572"
+              }
+            },
+            "question_id": "batches"
+          },
+          {
+            "answered_at": "2026-11-16T16:29:01.882548900Z",
+            "answer": "Refactoring the functions to return promises and using `async/await` is usually the best option. Instead of supplying the functions with callbacks that cause deep nesting, they return a promise that can be `await`ed and will be resolved once the data has arrived, allowing the next line of code to be evaluated in a sync-like fashion.\n\nThe above code can be restructured like so:\n\n```js\nasync function asyncAwaitVersion() {\n  const a = await getData()\n  const b = await getMoreData(a)\n  const c = await getMoreData(b)\n  const d = await getMoreData(c)\n  const e = await getMoreData(d)\n  // ...\n}\n```\n\nThere are lots of ways to solve the issue of callback hells:\n\n* Modularization: break callbacks into independent functions\n* Use a control flow library, like async\n* Use generators with Promises\n* Use async/await (from v7 on)",
+            "evaluation": {
+              "score": 0,
+              "accuracy": 0,
+              "completeness": 0,
+              "clarity": 0,
+              "matched_concepts": [],
+              "missing_concepts": [
+                "As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows."
+              ],
+              "feedback": [
+                "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                "Matched 0 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+                "Add the missing source concepts and a concrete example."
+              ],
+              "follow_up": "Apply this idea to a small example. Explain As an efficient JavaScript developer, you have to avoid the constantly growing indentation level, produce clean and readable code and be able to handle complex flows in your own words.",
+              "mode": "demo",
+              "source": {
+                "id": "30-seconds",
+                "title": "30 seconds of interviews",
+                "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/callback-hell.md",
+                "license": "MIT",
+                "locator": "questions/callback-hell.md @ da235b618572"
+              }
+            },
+            "question_id": "callback-hell"
+          },
+          {
+            "answered_at": "2026-11-16T16:29:01.900084600Z",
+            "answer": "XSS refers to client-side code injection where the attacker injects malicious scripts into a legitimate website or web application. This is often achieved when the application does not validate user input and freely injects dynamic HTML content.\n\nFor example, a comment system will be at risk if it does not validate or escape user input. If the comment contains unescaped HTML, the comment can inject a `<script>` tag into the website that other users will execute against their knowledge.\n\n* The malicious script has access to cookies which are often used to store session tokens. If an attacker can obtain a user’s session cookie, they can impersonate the user.\n* The script can arbitrarily manipulate the DOM of the page the script is executing in, allowing the attacker to insert pieces of content that appear to be a real part of the website.\n* The script can use AJAX to send HTTP requests with arbitrary content to arbitrary destinations.",
+            "evaluation": {
+              "score": 0,
+              "accuracy": 0,
+              "completeness": 0,
+              "clarity": 0,
+              "matched_concepts": [],
+              "missing_concepts": [
+                "On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it.",
+                "On the server, escaping HTML tags will prevent the browser from parsing the user input as actual HTML and therefore won't execute the script."
+              ],
+              "feedback": [
+                "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                "Matched 0 of 2 source concepts; clarity estimates answer length (20 words reaches 100).",
+                "Add the missing source concepts and a concrete example."
+              ],
+              "follow_up": "Apply this idea to a small example. Explain On the client, using `textContent` instead of `innerHTML` prevents the browser from running the string through the HTML parser which would execute scripts in it in your own words.",
+              "mode": "demo",
+              "source": {
+                "id": "30-seconds",
+                "title": "30 seconds of interviews",
+                "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/xss.md",
+                "license": "MIT",
+                "locator": "questions/xss.md @ da235b618572"
+              }
+            },
+            "question_id": "xss"
+          },
+          {
+            "answered_at": "2026-11-16T16:29:01.916099100Z",
+            "answer": "Big O notation is used in Computer Science to describe the time complexity of an algorithm. The best algorithms will execute the fastest and have the simplest complexity.\n\nAlgorithms don't always perform the same and may vary based on the data they are supplied. While in some cases they will execute quickly, in other cases they will execute slowly, even with the same number of elements to deal with.\n\nIn these examples, the base time is 1 element = `1ms`.\n\n##### O(1)\n\n```js\narr[arr.length - 1]\n```\n\n* 1000 elements = `1ms`\n\nConstant time complexity. No matter how many elements the array has, it will theoretically take (excluding real-world variation) the same amount of time to execute.\n\n##### O(N)\n\n```js\narr.filter(fn)\n```\n\n* 1000 elements = `1000ms`\n\nLinear time complexity. The execution time will increase linearly with the number of elements the array has. If the array has 1000 elements and the function takes 1ms to execute, 7000 elements will take 7ms to execute. This is because the function must iterate through all elements of the array before returning a result.\n\n##### O([1, N])\n\n```js\narr.some(fn)\n```\n\n* 1000 elements = `1ms <= x <= 1000ms`\n\nThe execution time varies depending on the data supplied to the function, it may return very early or very late. The best case here is O(1) and the worst case is O(N).\n\n##### O(NlogN)\n\n```js\narr.sort(fn)\n```\n\n* 1000 elements ~= `10000ms`\n\nBrowsers usually implement the quicksort algorithm for the `sort()` method and the average time complexity of quicksort is O(NlgN). This is very efficient for large collections.\n\n##### O(N^2)\n\n```js\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; j < arr.length; j++) {\n    // ...\n  }\n}\n```\n\n* 1000 elements = `1000000ms`\n\nThe execution time rises quadratically with the number of elements. Usually the result of nesting loops.\n\n##### O(N!)\n\n```js\nconst permutations = arr => {\n  if (arr.length <= 2) return arr.length === 2 ? [arr, [arr[1], arr[0]]] : arr\n  return arr.reduce(\n    (acc, item, i) =>\n      acc.concat(\n        permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map(val => [\n          item,\n          ...val\n        ])\n      ),\n    []\n  )\n}\n```\n\n* 1000 elements = `Infinity` (practically) ms\n\nThe execution time rises extremely fast with even just 1 addition to the array.",
+            "evaluation": {
+              "score": 100,
+              "accuracy": 100,
+              "completeness": 100,
+              "clarity": 100,
+              "matched_concepts": [
+                "Be wary of nesting loops as execution time increases exponentially."
+              ],
+              "missing_concepts": [],
+              "feedback": [
+                "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                "Matched 1 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+                "All rubric concepts were mentioned. Check your explanation against the cited reference."
+              ],
+              "follow_up": "Apply this idea to a small example. Explain Be wary of nesting loops as execution time increases exponentially in your own words.",
+              "mode": "demo",
+              "source": {
+                "id": "30-seconds",
+                "title": "30 seconds of interviews",
+                "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/big-o-notation.md",
+                "license": "MIT",
+                "locator": "questions/big-o-notation.md @ da235b618572"
+              }
+            },
+            "question_id": "big-o-notation"
+          },
+          {
+            "answered_at": "2026-11-16T16:29:01.935093700Z",
+            "answer": "Advantages include:\n\n* Not needing to process data if there is no need to even reference it\n* Having a consistent API leads to more adoption\n* Ability to easily adapt a callback pattern that will lead to more maintainable code\n\nAs you can see from below example, the callback is called with null as its first argument if there is no error. However, if there is an error, you create an Error object, which then becomes the callback's only parameter. The callback function allows a user to easily know whether or not an error occurred.\n\nThis practice is also called the _Node.js error convention_, and this kind of callback implementations are called _error-first callbacks_.\n\n```js\nvar isTrue = function(value, callback) {\n  if (value === true) {\n    callback(null, \"Value was true.\")\n  } else {\n    callback(new Error(\"Value is not true!\"))\n  }\n}\n\nvar callback = function(error, retval) {\n  if (error) {\n    console.log(error)\n    return\n  }\n  console.log(retval)\n}\n\nisTrue(false, callback)\nisTrue(true, callback)\n\n/*\n  { stack: [Getter/Setter],\n    arguments: undefined,\n    type: undefined,\n    message: 'Value is not true!' }\n  Value was true.\n*/\n```",
+            "evaluation": {
+              "score": 0,
+              "accuracy": 0,
+              "completeness": 0,
+              "clarity": 0,
+              "matched_concepts": [],
+              "missing_concepts": [
+                "This is just a convention. However, you should stick to it."
+              ],
+              "feedback": [
+                "Demo / rule-based: concept coverage is lexical overlap, not a factual correctness judgment.",
+                "Matched 0 of 1 source concepts; clarity estimates answer length (20 words reaches 100).",
+                "Add the missing source concepts and a concrete example."
+              ],
+              "follow_up": "Apply this idea to a small example. Explain This is just a convention. However, you should stick to it in your own words.",
+              "mode": "demo",
+              "source": {
+                "id": "30-seconds",
+                "title": "30 seconds of interviews",
+                "url": "https://github.com/30-seconds/30-seconds-of-interviews/blob/da235b6185721161b7ebc413075b76dc70339ccf/questions/node-error-first-callback.md",
+                "license": "MIT",
+                "locator": "questions/node-error-first-callback.md @ da235b618572"
+              }
+            },
+            "question_id": "node-error-first-callback"
+          }
+        ],
+        "trace": [
+          {
+            "step": "retrieve",
+            "status": "completed",
+            "detail": "Retrieved 55 licensed candidate questions using local lexical TF-IDF; document text is treated as data.",
+            "duration_ms": 0.365
+          },
+          {
+            "step": "select_five",
+            "status": "completed",
+            "detail": "Selected exactly five distinct source-grounded questions with reference answers and one follow-up each.",
+            "duration_ms": 0.009
+          },
+          {
+            "step": "study_plan",
+            "status": "completed",
+            "detail": "Created a bounded template study plan. Model calls: 0; paid spend: 0. Demo / rule-based.",
+            "duration_ms": 0.007
+          }
+        ],
+        "mode": "demo",
+        "created_at": "2026-11-16T16:29:01.802485Z",
+        "finished_at": "2026-11-16T16:29:01.947105Z"
+      }
+    ],
+    "recommendations": [
+      "Practice Node.js and review the cited concepts.",
+      "Practice Security and review the cited concepts.",
+      "Practice JavaScript and review the cited concepts."
+    ]
+  },
+  "missing_source": {
+    "request": {
+      "query": "Explain photosynthesis chloroplasts in orchids"
+    },
+    "response": {
+      "answer": "Not found in the interview knowledge base",
+      "questions": [],
+      "trace": [
+        {
+          "step": "retrieve",
+          "status": "completed",
+          "detail": "0 relevant source questions; backend: local lexical TF-IDF; no language model invoked.",
+          "duration_ms": 5.513
+        }
+      ],
+      "mode": "demo"
+    }
+  },
+  "cross_account_access_status": 404
+}

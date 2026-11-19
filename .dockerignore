@@ -1,0 +1,15 @@
+.git
+.env
+.tools
+.models
+.runtime
+**/node_modules
+**/target
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/test-results
+**/dist
+**/.data
+**/*.log
+docs/screenshots

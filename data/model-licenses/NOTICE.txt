@@ -1,0 +1,14 @@
+Built with Llama.
+
+Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.
+
+Model: Meta Llama-3.2-3B-Instruct, Q4_K_M GGUF quantization distributed by bartowski.
+Source: https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF
+Pinned revision: 5ab33fa94d1d04e903623ae72c95d1696f09f9e8
+File: Llama-3.2-3B-Instruct-Q4_K_M.gguf
+SHA-256: 6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff
+Original model: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+License: LLAMA-3.2-LICENSE.txt
+Acceptable use policy: https://www.llama.com/llama3_2/use-policy
+
+Weights remain in ignored .models and are not embedded in the source repository or application image.
