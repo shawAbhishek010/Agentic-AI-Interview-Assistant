@@ -36,6 +36,14 @@ def test_docx_prose_does_not_require_existing_question_answer_pairs(client):
     assert response.status_code==200 and response.json()['chunks'][0]['locator'].startswith('Paragraph 1')
 
 
+def test_markdown_sections_keep_fenced_examples_together():
+    markdown = "# Shell examples\n~~~sh\n# This is a comment\nprintf 'hello'\n~~~\n\n# Output\nThe command prints hello."
+    document = study.extract('lesson.md', markdown.encode(), 'Shell examples')
+    assert document['chunk_count'] == 2
+    assert '# This is a comment' in document['chunks'][0]['text']
+    assert document['chunks'][1]['text'].startswith('# Output')
+
+
 @pytest.mark.parametrize('name,body',[('script.exe',b'bad'),('notes.txt',b'\x00binary'),('empty.txt',b''),('bad.pdf',b'not a PDF')])
 def test_unsafe_or_unreadable_documents_are_rejected(client,name,body):
     assert client.post('/internal/documents/extract',files={'file':(name,body)}).status_code==422
@@ -51,10 +59,16 @@ def test_model_notes_use_document_material_and_user_request(monkeypatch):
     class Model:
         def complete(self,system,prompt,**kwargs):
             assert 'Atomicity' in prompt and 'beginner' in prompt
-            return ModelOutput(json.dumps({'title':'Transactions','summary':'A transaction groups related changes.','bullets':['All changes commit or roll back.']}),1,{}, {'provider':'llama.cpp'})
+            assert 'sections' in kwargs['response_schema']['properties']
+            body = {
+                'summary': 'A transaction groups related changes.',
+                'sections': [{'heading': 'Atomicity', 'text': 'All changes commit or roll back.', 'citation_ids': ['chunk-1']}],
+            }
+            return ModelOutput(json.dumps(body),1,{}, {'provider':'llama.cpp'})
     monkeypatch.setattr(study,'LocalSLM',Model)
     result=study.generate(payload())
     assert result['mode']=='local_slm' and result['sources'][0]['locator']=='Paragraph 1'
+    assert result['sections'][0]['citation_ids'] == ['chunk-1']
 
 
 def test_requested_count_and_citations_are_verified(monkeypatch):
@@ -73,8 +87,12 @@ def test_requested_fact_near_end_of_passage_is_in_model_input_and_visible_citati
         def complete(self,system,prompt,**kwargs):
             passage=json.loads(prompt)['passages'][0]['text']
             assert 'Durability means committed changes survive a restart.' in passage
-            assert len(passage.encode('utf-8'))<=500
-            return ModelOutput(json.dumps({'title':'Durability','summary':'Committed changes survive a restart.','bullets':['Committed data survives a restart.']}),1,{}, {})
+            assert len(passage.encode('utf-8'))<=1150
+            body = {
+                'summary': 'Committed changes survive a restart.',
+                'sections': [{'heading': 'Durability', 'text': 'Committed data survives a restart.', 'citation_ids': ['chunk-1']}],
+            }
+            return ModelOutput(json.dumps(body),1,{}, {})
     monkeypatch.setattr(study,'LocalSLM',Model)
     request=study.StudyRequest(title='Lecture',chunks=[{'id':'chunk-1','text':'General background information. '*30+'Durability means committed changes survive a restart.','locator':'Page 2'}],kind='notes',request='Explain durability after a restart.')
     result=study.generate(request)
@@ -106,7 +124,50 @@ def test_invented_citations_or_wrong_count_fall_back_honestly(monkeypatch,body):
 def test_unavailable_model_preserves_source_notes(monkeypatch):
     monkeypatch.setenv('SLM_ENABLED','false')
     result=study.generate(payload())
-    assert result['mode']=='extractive' and TEXT in result['summary']
+    assert result['mode']=='extractive' and result['summary_citation_ids'] == ['chunk-1']
+    assert result['summary'] + ' ' + result['sections'][0]['text'] == TEXT
+
+
+def test_overview_retrieves_late_sections_and_keeps_uncited_source_details(monkeypatch):
+    class Model:
+        def complete(self, system, prompt, **kwargs):
+            passages = json.loads(prompt)['passages']
+            assert [passages[0]['id'], passages[-1]['id']] == ['chunk-1', 'chunk-12']
+            body = {
+                'summary': 'The lesson covers transactions.',
+                'sections': [{'heading': 'Introduction', 'text': 'Transactions coordinate changes.', 'citation_ids': ['chunk-1']}],
+            }
+            return ModelOutput(json.dumps(body), 1, {}, {})
+
+    monkeypatch.setattr(study, 'LocalSLM', Model)
+    chapters = '\n\n'.join(f'## Chapter {i}\nTransactions coordinate related changes in scenario {i}.' for i in range(1, 13))
+    document = study.extract('transactions.md', chapters.encode(), 'Transactions')
+    request = study.StudyRequest(
+        title=document['title'], chunks=document['chunks'], kind='notes',
+        request='Give me detailed notes on the main ideas of this document.',
+    )
+    result = study.generate(request)
+    assert result['mode'] == 'local_slm'
+    assert result['sections'][-1] == {
+        'heading': 'Chapter 12', 'text': 'Transactions coordinate related changes in scenario 12.',
+        'citation_ids': ['chunk-12'], 'mode': 'extractive',
+    }
+    assert len(result['sources']) == 10
+
+
+def test_focused_source_notes_do_not_fall_back_to_unrelated_first_pages(monkeypatch):
+    monkeypatch.setenv('SLM_ENABLED', 'false')
+    request = study.StudyRequest(
+        title='Data systems', kind='notes', request='Explain replication and failover.',
+        chunks=[
+            {'id': 'chunk-1', 'locator': 'Page 1', 'text': 'Collations determine how strings sort.'},
+            {'id': 'chunk-2', 'locator': 'Page 8', 'text': 'Replication copies data. Failover promotes a standby.'},
+        ],
+    )
+    result = study.generate(request)
+    assert [source['id'] for source in result['sources']] == ['chunk-2']
+    assert result['summary'] == 'Replication copies data.'
+    assert result['sections'][0]['text'] == 'Failover promotes a standby.'
 
 
 def test_missing_voice_returns_visible_503_not_fake_audio(client,monkeypatch,tmp_path):

@@ -24,15 +24,36 @@ from .models import Question, Source, PlanRequest, Trace, PlanResponse, Evaluati
 ROOT = Path(__file__).resolve().parents[2]
 BANK_REV = "da235b6185721161b7ebc413075b76dc70339ccf"
 STOP = set("a an the is are of to in for and or on how what why when which with this that it as be can does do you your from by explain describe have has about between not into".split())
-ROLE_TAGS = {
-    "Frontend Developer": {"javascript", "react", "css", "html", "accessibility", "security"},
-    "React Developer": {"react"},
-    "JavaScript Developer": {"javascript"},
-    "Full Stack Developer": {"javascript", "node", "react", "security"},
-    "Backend Developer": {"node", "security", "javascript"},
+ROLE_TOPICS = {
+    "Frontend Developer": {"JavaScript", "React", "CSS", "HTML", "Accessibility", "Security"},
+    "React Developer": {"React"},
+    "JavaScript Developer": {"JavaScript"},
+    "Full Stack Developer": {"JavaScript", "Node.js", "React", "CSS", "HTML", "Accessibility", "Security", "SQL"},
+    "Backend Developer": {"Node.js", "Security", "JavaScript", "SQL"},
+    "Java Developer": {"Java"},
+    "Python Developer": {"Python"},
+    "SQL Developer": {"SQL"},
 }
 TOPICS = {"react": "React", "javascript": "JavaScript", "css": "CSS", "html": "HTML", "node": "Node.js", "security": "Security", "accessibility": "Accessibility"}
 ALLOWED_LICENSES = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0", "CC-BY-4.0", "CC-BY-SA-4.0"}
+DIFFICULTIES = ("beginner", "intermediate", "advanced")
+VENDORED_THEORY_PROMPTS = {
+    "callback-hell": "What is callback hell, and how can it be avoided?",
+    "node-error-first-callback": "What are the advantages of the error-first callback convention in Node.js?",
+}
+EXERCISE_PROMPT = re.compile(
+    r"^(?:please\s+)?(?:(?:can|could|would) you\s+)?(?:using[^,]+,\s*)?"
+    r"(?:write|create|implement|generate|solve|build|complete|fix|debug|refactor|code|given)\b"
+    r"|^what (?:is the output|(?:will|would) .*\b(?:print|log|return|output)\b|does .+ (?:evaluate to|return)\??$)",
+    re.I,
+)
+
+
+def is_theory_prompt(question: str) -> bool:
+    return bool(question.strip()) and "```" not in question and "~~~" not in question and not EXERCISE_PROMPT.search(question)
+
+
+THEORY_FOLLOW_UP = "Can you give a practical example and explain it in words?"
 
 
 def tokens(text: str) -> set[str]:
@@ -58,7 +79,6 @@ class Bank:
         self.storage.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.questions: list[Question] = []
-        self.tags: dict[str, set[str]] = {}
         self.sources: dict[str, dict] = {}
         self.documents: list[Document] = []
         self.semantic = None
@@ -77,30 +97,43 @@ class Bank:
     def load(self):
         raw_path = Path(os.getenv("PUBLIC_BANK_PATH", str(ROOT / "data" / "public" / "questions.raw.json")))
         raw = json.loads(raw_path.read_text(encoding="utf-8-sig"))
-        questions, tags = [], {}
+        questions, retired = [], {}
         for item in raw:
             qid = item["name"].removesuffix(".md")
             qtags = set(item.get("tags", ["javascript"]))
             if "react" in item["question"].lower():
                 qtags.add("react")
-            tag = "react" if "react" in qtags else "node" if "node" in qtags else "security" if "security" in qtags else next(iter(sorted(qtags)))
+            tag = "react" if "react" in qtags else "node" if "node" in qtags else "security" if "security" in qtags or qid == "cors" else next(iter(sorted(qtags)))
             concepts = [clean(c)[:300] for c in item.get("goodToHear", []) if len(tokens(c)) > 0][:6]
             if not concepts:
                 concepts = sorted(tokens(item["question"]) & tokens(item["answer"]))[:5] or sorted(tokens(item["answer"]))[:4]
-            follow_up = f"Apply this idea to a small example. Explain {concepts[0].rstrip('.')} in your own words."
+            follow_up = f"What does this point mean in practice? {concepts[0].rstrip('.')}."
             source = Source(id="30-seconds", title="30 seconds of interviews", url=f"https://github.com/30-seconds/30-seconds-of-interviews/blob/{BANK_REV}/questions/{item['name']}", license="MIT", locator=f"questions/{item['name']} @ {BANK_REV[:12]}")
-            questions.append(Question(id=qid, role="Frontend Developer", topic=TOPICS.get(tag, tag), difficulty={0:"beginner",1:"beginner",2:"intermediate",3:"advanced"}.get(item.get("expertise",1),"intermediate"), question=clean(item["question"]), answer=clean(item["answer"]), follow_up=follow_up, concepts=concepts, source=source))
-            tags[qid] = qtags
+            prompt = VENDORED_THEORY_PROMPTS.get(qid, clean(item["question"]))
+            q = Question(id=qid, role="Frontend Developer", topic=TOPICS.get(tag, tag), difficulty={0:"beginner",1:"beginner",2:"intermediate",3:"advanced"}.get(item.get("expertise",1),"intermediate"), question=prompt, answer=clean(item["answer"]), follow_up=follow_up, concepts=concepts, source=source)
+            if is_theory_prompt(q.question):
+                questions.append(q)
+            else:
+                retired[q.id] = q
         self.sources = {"30-seconds": {"id":"30-seconds", "title":"30 seconds of interviews", "url":f"https://github.com/30-seconds/30-seconds-of-interviews/tree/{BANK_REV}", "license":"MIT", "status":"indexed", "question_count":len(questions), "chunk_count":0}}
+        self._load_theory(questions)
+        self.bundled_source_ids = frozenset(self.sources)
         for path in sorted(self.storage.glob("*.json")):
             saved = json.loads(path.read_text(encoding="utf-8"))
-            imported = [Question.model_validate(q) for q in saved["questions"]]
-            questions.extend(imported)
-            self.sources[saved["source"]["id"]] = saved["source"]
-            for q in imported:
-                tags[q.id] = {q.topic.lower()}
-        self.questions, self.tags = questions, tags
+            active_count = 0
+            for item in saved["questions"]:
+                q = Question.model_validate(item)
+                if is_theory_prompt(q.question):
+                    if not is_theory_prompt(q.follow_up):
+                        q = q.model_copy(update={"follow_up": THEORY_FOLLOW_UP})
+                    questions.append(q)
+                    active_count += 1
+                else:
+                    retired[q.id] = q
+            self.sources[saved["source"]["id"]] = {**saved["source"], "question_count": active_count, "chunk_count": 0}
+        self.questions = questions
         self.by_id = {q.id: q for q in questions}
+        self.retired_by_id = retired
         self.documents = []
         for q in questions:
             text = f"{q.question}\n{q.answer}"
@@ -110,6 +143,25 @@ class Bank:
         self.doc_frequency = Counter(t for q in questions for t in tokens(q.question + " " + q.answer))
         if os.getenv("RETRIEVAL_BACKEND", "lexical") == "semantic":
             self._build_semantic()
+
+    def _load_theory(self, questions: list[Question]) -> None:
+        groups = json.loads((ROOT / "data" / "theory" / "questions.json").read_text(encoding="utf-8"))
+        for group in groups:
+            topic, source_id = group["topic"], group["id"]
+            title = f'Placement AI theory · {group["reference"]}'
+            license_name = "CC0-1.0"
+            role = next(role for role, topics in ROLE_TOPICS.items() if topic in topics)
+            for item in group["questions"]:
+                source = Source(id=source_id, title=title, url=item["url"], license=license_name, locator=item["locator"])
+                fields = {key: value for key, value in item.items() if key not in {"url", "locator"}}
+                q = Question(role=role, topic=topic, source=source, **fields)
+                if not is_theory_prompt(q.question) or not is_theory_prompt(q.follow_up):
+                    raise ValueError(f"Theory bank contains a coding prompt in {q.id}.")
+                questions.append(q)
+            self.sources[source_id] = {
+                "id": source_id, "title": title, "url": group["url"], "license": license_name,
+                "status": "indexed", "question_count": len(group["questions"]), "chunk_count": 0,
+            }
 
     def _build_semantic(self):
         # Explicitly opt-in: optional dependencies and model weights must be installed locally.
@@ -127,18 +179,33 @@ class Bank:
         return "sentence-transformers/FAISS" if self.semantic else "local lexical TF-IDF"
 
     def catalog(self):
-        return {"roles":sorted(set(ROLE_TAGS) | {q.role for q in self.questions if q.source.id != "30-seconds"}), "topics":sorted({q.topic for q in self.questions}), "question_count":len(self.questions), "mode":"demo"}
+        with self.lock:
+            roles = sorted(set(ROLE_TOPICS) | {q.role for q in self.questions if q.source.id not in self.bundled_source_ids})
+            options = {}
+            for role in roles:
+                counts = {"": Counter()}
+                for q in self._role_questions(role):
+                    counts[""][q.difficulty] += 1
+                    counts.setdefault(q.topic, Counter())[q.difficulty] += 1
+                options[role] = {
+                    topic: [level for level in DIFFICULTIES if per_level[level] >= 5]
+                    for topic, per_level in sorted(counts.items()) if sum(per_level.values()) >= 5
+                }
+            return {
+                "roles": roles, "topics": sorted({q.topic for q in self.questions}),
+                "interview_options": options, "question_count": len(self.questions), "mode": "demo",
+            }
+
+    def _role_questions(self, role):
+        topics = ROLE_TOPICS.get(role, ())
+        return [
+            q for q in self.questions
+            if (q.topic in topics if q.source.id in self.bundled_source_ids else q.role == role)
+        ]
 
     def list_questions(self, role=None, topic=None, difficulty=None, search=None):
-        result = list(self.questions)
-        if role:
-            if role not in self.catalog()["roles"]:
-                return []
-            result = [q.model_copy(update={"role":role}) for q in result if (q.source.id == "30-seconds" and bool(self.tags[q.id] & ROLE_TAGS.get(role,set()))) or (q.source.id != "30-seconds" and q.role == role)]
-            if role == "Backend Developer":
-                result = [q for q in result if q.source.id != "30-seconds" or not (self.tags[q.id] & {"react","html","css","accessibility"})]
-            if role == "JavaScript Developer":
-                result = [q for q in result if q.source.id != "30-seconds" or "react" not in self.tags[q.id]]
+        with self.lock:
+            result = [q.model_copy(update={"role": role}) for q in self._role_questions(role)] if role else list(self.questions)
         if topic:
             result = [q for q in result if q.topic.lower() == topic.lower()]
         if difficulty:
@@ -218,10 +285,15 @@ class Bank:
             result = self.workflow.invoke({"request":request}, config={"recursion_limit":8})
         return PlanResponse(questions=result["questions"],trace=result["trace"],study_plan=result["study_plan"])
 
-    def evaluate(self, question_id, answer):
-        q = self.by_id.get(question_id)
+    def evaluation_question(self, question_id):
+        with self.lock:
+            q = self.by_id.get(question_id) or self.retired_by_id.get(question_id)
         if not q:
             raise KeyError(question_id)
+        return q
+
+    def evaluate(self, question_id, answer):
+        q = self.evaluation_question(question_id)
         answer_tokens = tokens(answer)
         matched, missing = [], []
         for concept in q.concepts:
@@ -257,12 +329,17 @@ class Bank:
             if not isinstance(item,dict):
                 raise ValueError("Every record must be a question/answer object.")
             question, answer = clean(item.get("question","")), clean(item.get("answer",""))
+            if not is_theory_prompt(question):
+                raise ValueError(f"Record {i + 1} must ask a theory question without a coding exercise or code block.")
+            follow_up = clean(item.get("follow_up") or THEORY_FOLLOW_UP)
+            if not is_theory_prompt(follow_up):
+                raise ValueError(f"Record {i + 1} must use a theory follow-up without a coding exercise or code block.")
             concepts = item.get("concepts") or sorted(tokens(question) & tokens(answer))[:5] or sorted(tokens(answer))[:4]
             if isinstance(concepts,str):
                 concepts = [c.strip() for c in concepts.split(";") if c.strip()]
             if len(concepts) > 10 or any(not isinstance(c,str) or len(c)>300 for c in concepts):
                 raise ValueError("Concepts must be a list of at most 10 short strings.")
-            parsed.append(Question(id=f"{sid}-{i+1}",role=clean(item.get("role","Software Engineer"))[:100],topic=clean(item.get("topic","General"))[:100],difficulty=item.get("difficulty") or "intermediate",question=question,answer=answer,follow_up=clean(item.get("follow_up") or f"Apply the concept in this question to an example: {question[:200]}"),concepts=concepts,source=Source(id=sid,title=clean(title)[:200],url=url,license=license_name,locator=f"record {i+1}")))
+            parsed.append(Question(id=f"{sid}-{i+1}",role=clean(item.get("role","Software Engineer"))[:100],topic=clean(item.get("topic","General"))[:100],difficulty=item.get("difficulty") or "intermediate",question=question,answer=answer,follow_up=follow_up,concepts=concepts,source=Source(id=sid,title=clean(title)[:200],url=url,license=license_name,locator=f"record {i+1}")))
         source = {"id":sid,"title":clean(title)[:200],"url":url,"license":license_name,"status":"indexed","question_count":len(parsed),"chunk_count":0}
         payload = {"source":source,"questions":[q.model_dump() for q in parsed]}
         with self.lock:
@@ -274,7 +351,7 @@ class Bank:
         return self.sources[sid]
 
     def delete_source(self, sid):
-        if sid == "30-seconds":
+        if sid in self.bundled_source_ids:
             raise ValueError("The bundled public source is read-only; remove imported sources instead.")
         if sid not in self.sources or not re.fullmatch(r"source-[a-f0-9]{32}",sid):
             raise KeyError(sid)

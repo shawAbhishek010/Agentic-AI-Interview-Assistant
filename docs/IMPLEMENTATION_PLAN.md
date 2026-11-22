@@ -23,7 +23,7 @@ First satisfy data ingestion/chunking, grounded role-based five-question intervi
 
 ## Design direction
 
-Premium student workspace following the provided image: navy `#0B1020`, charcoal surfaces, violet primary actions and cyan evidence/status accents. Compact sidebar, coherent typography, restrained borders/glows, accessible responsive layouts. Analytics begin empty and populate only from real practice.
+White-first student workspace with charcoal text, neutral surfaces, and a restrained blue accent. A compact sidebar, consistent controls, and scannable lists keep practice tasks easy to find. Interview questions come before the avatar on small screens. Analytics begin empty and populate from real practice.
 
 ## Completion phase — 17 November 2026
 

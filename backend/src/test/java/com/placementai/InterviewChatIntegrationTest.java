@@ -89,6 +89,25 @@ class InterviewChatIntegrationTest {
     }
 
     @Test
+    void generalRepliesKeepTheirTopicInHistoryWithoutInheritingTheInterviewCitation() throws Exception {
+        String id = create().path("id").asText();
+        String explanation = "JavaScript runs in browsers. Python is common in data analysis and automation.";
+        when(agent.chat(any())).thenReturn(Map.of("answer", explanation, "mode", "local_slm",
+                "scope", "general", "model", model, "source", questions.get(0).get("source")));
+        var detour = chat(id, Map.of("message", "How do JavaScript and Python differ?"));
+        assertEquals("general", detour.path("reply").path("scope").asText());
+        assertFalse(detour.path("reply").has("source"));
+        assertEquals(detour.path("reply"), read(id).path("chat_messages").get(1));
+        assertEquals(0, read(id).path("turns").size());
+        chat(id, Map.of("message", "Which one would I use for data science?"));
+        var captured = ArgumentCaptor.forClass(Map.class);
+        verify(agent, times(2)).chat(captured.capture());
+        var history = (List<?>) captured.getAllValues().get(1).get("history");
+        assertEquals(Map.of("role", "assistant", "content", explanation, "scope", "general"), history.get(1));
+        verify(agent, never()).evaluate(anyString(), anyString());
+    }
+
+    @Test
     void contextUsesStoredQuestionAndOnlySixRecentMessagesForThatQuestion() throws Exception {
         String id = create().path("id").asText();
         var session = sessions.findById(id).orElseThrow();
@@ -199,10 +218,11 @@ class InterviewChatIntegrationTest {
         mvc.perform(post(path(id)).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"Explain it\"}")).andExpect(status().isServiceUnavailable());
         assertEquals(0, read(id).path("chat_messages").size());
-        doReturn(Map.of("answer", "Source reference only.", "mode", "demo", "warning", "Local model unavailable.")).when(agent).chat(any());
+        doReturn(Map.of("answer", "I couldn’t answer that just now.", "mode", "demo", "scope", "unavailable")).when(agent).chat(any());
         JsonNode fallback = chat(id, Map.of("message", "Explain it"));
         assertEquals("demo", fallback.path("reply").path("mode").asText());
-        assertEquals("Local model unavailable.", fallback.path("reply").path("warning").asText());
+        assertEquals("unavailable", fallback.path("reply").path("scope").asText());
+        assertFalse(fallback.path("reply").has("source"));
         assertEquals(2, read(id).path("chat_messages").size());
     }
 

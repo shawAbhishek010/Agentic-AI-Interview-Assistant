@@ -7,9 +7,9 @@ The completed [300-second narrated recording](demo-output/Placement-AI-five-minu
 | Time | Demonstration |
 | --- | --- |
 | 0:00–0:35 | Show the Project 10 objective, architecture and zero-paid defaults. Explain the private local Llama-3.2-3B-Instruct CPU service and the separately labelled rule-based rubric. |
-| 0:35–1:10 | Show `data/ATTRIBUTION.md`, the included MIT notice, and `scripts/ingestion-sample.ps1`: 103 input Q&A and the actual chunk count with a source locator. |
+| 0:35–1:10 | Show `data/ATTRIBUTION.md`, the included MIT notice, and `scripts/ingestion-sample.ps1` for the theory question count, chunk count, and a source locator. |
 | 1:10–2:10 | Open the application, enter an isolated demo workspace, choose a supported role, and start an interview. Show exactly five questions, reference answers, and one follow-up each in the REST response. Type an answer; show the saved lexical rubric and a source link. |
-| 2:10–2:45 | Show Practice Library, bookmark a question, and create a five-question set. Explain that Java/Python coverage is not advertised without a licensed imported bank. |
+| 2:10–2:45 | Show Practice Library, bookmark a question, and create a five-question set. Show the bundled Java, Python, and SQL topics. |
 | 2:45–3:25 | Review saved feedback and real analytics. Explain that scores are heuristic concept-coverage proxies. Demonstrate replay, microphone consent, and the typed fallback. The avatar is animated. |
 | 3:25–4:15 | In Knowledge Base, retrieve a closure answer with sources, inspect the workflow, then ask `Explain photosynthesis chloroplasts in orchids`. Show the exact no-source message and empty citation list. |
 | 4:15–5:00 | Run the local model test and show its actual prompt, response and latency. Show the Postman/Newman summary and three actual role-based query records. The handout's suggested SLM is now demonstrated locally; Grok remains disabled. |

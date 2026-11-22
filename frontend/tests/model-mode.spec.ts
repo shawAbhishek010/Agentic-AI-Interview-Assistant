@@ -34,7 +34,7 @@ async function mockWorkspace(page:Page,{status='ready',testFails=false,queryFall
   });
   await page.goto(generatedFollowUp?'/#feedback':'/#knowledge');
   await page.getByRole('button',{name:'Explore demo workspace'}).click();
-  await expect(page.getByRole('heading',{name:generatedFollowUp?'Good practice. Better perspective.':'Knowledge you can trace.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:generatedFollowUp?'Feedback & review':'Knowledge base',level:1,exact:true})).toBeVisible();
   return queryRequests;
 }
 

@@ -27,7 +27,7 @@ Interview sessions retain JSON snapshots of questions, references, follow-ups, t
 
 ## Retrieval and agent bounds
 
-The vendored public bank contains 103 records. Ingestion removes control characters and script blocks, validates records, retains source locators and licenses, and splits text into overlapping chunks (1,200 characters, 1,000-character stride). Role mappings are derived from source tags and exclude frontend topics from the Backend Developer role. Exact duplicate IDs are not permitted in an interview.
+The default bank indexes 132 theory records across ten topics. Ingestion cleans and validates records, retains source locators and licenses, and splits text into overlapping chunks of 1,200 characters with a 1,000-character stride. Bundled role mappings use the primary topic. The catalog advertises role, topic, and difficulty choices backed by at least five questions. Retired exercises stay outside active retrieval and selection, and saved interview snapshots retain their original references.
 
 Default retrieval uses local lexical TF-IDF-style ranking with a relevance coverage gate. Optional semantic mode embeds the actual chunks with `all-MiniLM-L6-v2`, normalizes vectors, and searches a FAISS inner-product index. Source-compatible lexical evidence still gates semantic results to preserve an honest missing-source fallback. Semantic mode requires installed optional dependencies and previously downloaded weights; it does not silently download a model while serving requests.
 
@@ -37,7 +37,7 @@ The optional SLM adapter permits only loopback or known private Docker hostnames
 
 ## Transparent feedback
 
-Help requests use a separate interview conversation, never a scored turn. The gateway sends the saved question/reference and latest six same-question messages to the local model, preserving the original five questions. Conversation messages are owner-scoped and persisted with the session. The interface routes clear clarification requests to Ask Ava and offers an explanation of saved feedback.
+Help requests and detours use a separate interview conversation. The gateway sends the saved question/reference and latest six same-question messages to the local model. The latest request determines whether Ava uses the reference or follows a general topic from the discussion. The gateway attaches the saved citation only to interview-grounded replies. Conversation messages are owner-scoped and persisted with the session without advancing the five scored questions.
 
 For follow-up dialogue, the gateway adds the stored candidate answer and actual asked follow-up to private model context. The UI keeps the interviewer reply visible and speaks the same text, then captures one completed candidate turn after consent. Main answers use the existing scored-answer endpoint; clarification and follow-up discussion use chat. Next-question navigation is explicit through a button or voice command. Speech defaults on with mute, while microphone capture requires consent. Sequential audio chunks preserve long replies, and stop/pause/navigation invalidate stale capture/playback callbacks.
 

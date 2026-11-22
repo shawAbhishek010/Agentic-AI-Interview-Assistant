@@ -6,7 +6,7 @@ import pytest
 from docx import Document
 from fastapi.testclient import TestClient
 
-from app.engine import Bank, ROLE_TAGS
+from app.engine import Bank, ROLE_TOPICS, is_theory_prompt
 from app.models import PlanRequest
 from app import main
 
@@ -24,12 +24,12 @@ def client(bank,monkeypatch):
     return TestClient(main.app,headers={"X-Internal-Token":"test-internal-key"})
 
 
-@pytest.mark.parametrize("role",list(ROLE_TAGS))
-def test_five_role_interviews_have_five_distinct_cited_answers(bank,role):
+@pytest.mark.parametrize("role",list(ROLE_TOPICS))
+def test_bundled_roles_have_five_distinct_cited_answers(bank,role):
     response=bank.plan(PlanRequest(role=role))
     assert len(response.questions)==5
     assert len({q.id for q in response.questions})==5
-    assert all(q.role==role and q.answer and q.follow_up and q.source.license=="MIT" for q in response.questions)
+    assert all(q.role==role and q.answer and q.follow_up and q.source.license in {"MIT","CC0-1.0"} for q in response.questions)
     assert len(response.trace)==3
     if role=="Backend Developer":
         assert all(q.topic not in {"React","HTML","CSS","Accessibility"} for q in response.questions)
@@ -91,10 +91,43 @@ def test_rubric_distinguishes_source_concepts_from_nonsense(bank):
 
 
 def test_ingestion_has_provenance_and_chunks(bank):
-    assert len(bank.questions)==103
-    assert len(bank.documents)>103
+    assert len(bank.questions)==132
+    assert len(bank.documents)>len(bank.questions)
     assert all(d.metadata["question_id"] and d.metadata["locator"] for d in bank.documents)
-    assert bank.sources["30-seconds"]["chunk_count"]==len(bank.documents)
+    assert sum(source["chunk_count"] for source in bank.sources.values())==len(bank.documents)
+
+
+def test_every_default_topic_and_advertised_difficulty_supports_a_theory_interview(bank):
+    catalog = bank.catalog()
+    assert catalog["interview_options"]["Full Stack Developer"]["Security"] == []
+    assert "React" not in catalog["interview_options"]["Backend Developer"]
+    assert all(is_theory_prompt(q.question) and is_theory_prompt(q.follow_up) for q in bank.questions)
+    for role, topics in ROLE_TOPICS.items():
+        options = catalog["interview_options"][role]
+        assert set(options) == topics | {""}
+        for topic, levels in options.items():
+            if topic:
+                assert len(bank.list_questions(role, topic)) >= 8
+            for difficulty in [None, *levels]:
+                plan = bank.plan(PlanRequest(role=role, topic=topic or None, difficulty=difficulty))
+                assert len({q.id for q in plan.questions}) == 5
+                assert all((not topic or q.topic == topic) and (not difficulty or q.difficulty == difficulty)
+                           for q in plan.questions)
+
+
+def test_retired_coding_exercise_is_unavailable_to_new_sessions_but_keeps_scoring_older_sessions(client, bank):
+    assert client.get("/internal/questions/batches").status_code == 404
+    ids = [q.id for q in bank.list_questions("JavaScript Developer")[:4]] + ["batches"]
+    assert client.post("/internal/agent/plan", json={"role":"JavaScript Developer","question_ids":ids}).status_code == 422
+    assert client.post("/internal/agent/evaluate", json={"question_id":"batches","answer":"Consider the lowest ingredient ratio."}).status_code == 200
+
+
+def test_shared_import_rejects_coding_exercises_atomically(bank):
+    records = imported_records()
+    records[-1]["question"] = "Can you write a function that computes the next five numbers?"
+    with pytest.raises(ValueError, match="Record 5 must ask a theory question"):
+        bank.import_questions(records, "Coding prompt", "https://example.org/bank", "MIT")
+    assert len(bank.questions) == 132
 
 
 def test_custom_practice_set_must_be_five_distinct_matching_questions(client,bank):

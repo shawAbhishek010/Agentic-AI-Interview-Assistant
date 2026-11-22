@@ -1,8 +1,11 @@
 # Placement AI
 
-A source-grounded interview practice workspace for **CSL374 Project 10 — Placement Interview Prep Bot**. Six responsive screens cover the overview, animated interview room, practice library, answer review, progress analytics, and knowledge/agent workspace.
+A source-grounded interview practice workspace for **CSL374 Project 10 — Placement Interview Prep Bot**. The six sections are Overview, AI Interview with AVA, Practice Library, Feedback & Analytics, Resume Mock, and Knowledge Base.
 
 The application works without a paid model account. It retrieves licensed public Q&A, selects exactly **five distinct questions**, preserves reference answers and citations, and explains a transparent concept-coverage rubric. The optional local **Llama-3.2-3B-Instruct** service provides genuine source-grounded answer generation and optional interview follow-ups. Real model output and rule-based scores are labelled separately. **Built with Llama.** No paid API or Ollama is used.
+
+- **Practice Library → Coding IDE** offers 20 beginner exercises, starter code, and local hints and code review for Java, JavaScript, and Python. JavaScript examples and the free-form playground run in the browser. Built-in hints remain available when the local model is unavailable.
+- **Resume Mock** reads PDF, DOCX, TXT, or Markdown resumes up to 5 MB. AVA asks five questions from retrieved resume passages with a follow-up per question. Your account stores the supporting excerpts and ungraded answers. The original file is discarded after extraction.
 
 ![Placement AI overview](docs/screenshots/01-overview.png)
 
@@ -61,13 +64,13 @@ Logs and owned process IDs are in `.runtime`. The stop script checks process ide
 - Licensed-source catalog, admin JSON/CSV/PDF/DOCX import/reindex/delete, RAG query inspection, citations and real LangGraph selection traces.
 - Genuine local Llama-3.2-3B-Instruct inference, explicit source-grounded generation, model health/test controls, disabled/unreachable-model fallback, and authenticated private inference.
 - No paid provider calls, disabled hosted tracing, clear no-source fallback, upload validation and internal service authentication.
-- Contextual **Ask Ava** tutoring: clarification/help requests are not graded or counted as answers. Ask for explanations/examples, ask follow-up questions, or use **Explain this feedback**. Conversation persists within the owned interview and does not advance its five scored questions.
+- Contextual **Ask Ava** tutoring and conversation: ask about the current question, compare technologies, or take a short detour. Local replies can follow the new topic across messages. Interview-grounded replies show the saved citation, and general replies are labelled **General conversation**. Chat persists within the owned interview without advancing its five scored questions.
 - Interview replies appear in **text and audio by default**, with a **Spoken replies** mute control. **Start voice interview** requests microphone consent, reads the question, listens for a candidate answer, and then displays and speaks the same feedback/follow-up. Follow-up responses use contextual chat without adding scored turns. Say **next question** or use its button to continue. **Ask with voice** remains available for ungraded clarification. Pause/end/navigation cancel speech and capture; typed chat always remains available.
-- **Knowledge Base → My study documents** accepts ordinary PDF/DOCX/TXT/Markdown prose for any signed-in user. Request explanatory notes or 1–5 practice questions, inspect document passage citations, revisit saved materials, download Markdown, or delete your private document.
+- **Knowledge Base → My study documents** accepts ordinary PDF/DOCX/TXT/Markdown prose for any signed-in user. Request an overview with cited sections, focus on specific topics, or create 1–5 practice questions. Revisit saved materials, download a Word document with numbered references, or delete your private document.
 
 Browser speech recognition varies by browser and can use a vendor's service. It requires explicit consent and a visible microphone state; typed input remains available. Placement AI stores answer text, not microphone audio. The interviewer is a CSS-animated robot, not live avatar video. Physical microphone/TTS behavior still needs a manual check on the presentation device.
 
-To learn rather than submit an answer, type “I don’t understand this; can you explain it?” and choose **Ask Ava instead**, or use the dedicated Ask Ava box. Explanations stay visible and are spoken unless muted. The tutoring endpoint carries the current reference, recent conversation, and any saved candidate answer/asked follow-up, so “give me an example of that” retains context. Original reference answers remain visible; generated explanations may still need checking against them. Long replies are spoken in sequential chunks; the microphone resumes only after the final chunk.
+During a voice interview, say “I don’t know” or ask a specific question about what is unclear. Ava keeps the current interview question open while you ask for examples or clarification. Say **“My answer is…”** followed by your answer, or select **Ready to answer** when you want to return to the interview. For typed help, use **Ask Ava instead** or the Ask Ava box. For interview-related help, Ava uses the current reference, recent conversation, and any saved candidate answer and asked follow-up. With local Llama enabled, Ava explains the topic and gives specific coaching on submitted answers. The rubric stays in the feedback view. Explanations remain visible and are spoken unless muted. Long replies are spoken in sequential chunks, and the microphone resumes after the final chunk.
 
 Personal study documents are separate from the administrator-managed public Q&A bank. They need no existing Q:/A: formatting or public provenance URL. Text extraction supports readable documents; scanned PDFs require OCR beforehand. Private chunks/materials are stored in the owner's database record, never added to the shared source catalog. If inference fails, source-extracted fallback notes/prompts are clearly labelled.
 
@@ -75,9 +78,9 @@ Interview scores remain transparent lexical proxies even when the local model is
 
 ## Data and retrieval
 
-The initial bank contains **103 Q&A records and 137 overlapping chunks** from an MIT-licensed public GitHub repository. The original license, immutable revision and per-question source locators are included in [data/ATTRIBUTION.md](data/ATTRIBUTION.md). Source examples include older APIs; inspect citations when studying them.
+The default theory bank contains **132 Q&A records across 10 topics**, with a reference answer and a conceptual follow-up for each. It combines 92 eligible MIT-licensed records with 40 original, cited questions. [Sources and licenses](data/ATTRIBUTION.md)
 
-Supported initial roles: **Frontend Developer, React Developer, JavaScript Developer, Full Stack Developer, and Backend Developer** (Node.js/JavaScript). Topics include JavaScript, React, Node.js, HTML, CSS, Accessibility and Security. Java/Python/SQL banks can be added by an administrator using appropriately licensed sources; their coverage is not fabricated in the seeded catalog. Topic/difficulty combinations with fewer than five questions return a clear setup error.
+Bundled roles cover Frontend, React, JavaScript, Full Stack, Backend, Java, Python, and SQL development. Each default topic has at least eight questions. Setup offers only topics and specific difficulty levels backed by at least five questions for the selected role. For example, Full Stack Developer can start a Security interview with mixed difficulty. The room offers a new theory interview when a saved session still contains a retired exercise.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ingestion-sample.ps1

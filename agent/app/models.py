@@ -47,6 +47,7 @@ class QueryRequest(StrictModel):
 class ChatMessage(StrictModel):
     role: Literal["user", "assistant"]
     content: str = Field(min_length=1, max_length=3000)
+    scope: Literal["interview", "general"] | None = None
 
 
 class ChatRequest(StrictModel):
@@ -60,7 +61,8 @@ class ChatRequest(StrictModel):
 class ChatResponse(StrictModel):
     answer: str = Field(min_length=1, max_length=3000)
     mode: Literal["local_slm", "demo"]
-    source: Source
+    scope: Literal["interview", "general", "unavailable"]
+    source: Source | None = None
     model: dict | None = None
     warning: str | None = None
 
@@ -70,6 +72,12 @@ class Trace(StrictModel):
     status: str = "completed"
     detail: str
     duration_ms: float
+
+
+class InterviewCoaching(StrictModel):
+    text: str = Field(min_length=1, max_length=3000)
+    mode: Literal["local_slm"] = "local_slm"
+    model: dict
 
 
 class Evaluation(StrictModel):
@@ -86,6 +94,7 @@ class Evaluation(StrictModel):
     follow_up_mode: str = "demo"
     model: dict | None = None
     warning: str | None = None
+    coaching: InterviewCoaching | None = None
 
 
 class PlanResponse(StrictModel):

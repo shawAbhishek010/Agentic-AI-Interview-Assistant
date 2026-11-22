@@ -4,18 +4,19 @@ export interface Question {id:string;role:string;topic:string;difficulty:'beginn
 export interface Trace {step:string;status:string;detail:string;duration_ms:number}
 export interface ModelInfo {provider:string;model_id:string;status:string;local:boolean}
 export interface ModelTestResult {mode:string;model:ModelInfo;prompt:string;response:string;latency_ms:number;usage:Record<string,number>}
-export interface Evaluation {score:number;accuracy:number;completeness:number;clarity:number;matched_concepts:string[];missing_concepts:string[];feedback:string[];follow_up:string;follow_up_mode?:string;model?:ModelInfo;mode:string;source:Source}
+export interface Evaluation {score:number;accuracy:number;completeness:number;clarity:number;matched_concepts:string[];missing_concepts:string[];feedback:string[];follow_up:string;follow_up_mode?:string;model?:ModelInfo;mode:string;source:Source;coaching?:{text:string;mode:'local_slm';model:ModelInfo}|null}
 export interface Turn {question_id:string;answer:string;evaluation:Evaluation;answered_at:string}
-export interface ChatMessage {id:string;question_id:string;role:'user'|'assistant';content:string;created_at:string;mode:'user'|'local_slm'|'demo';model?:ModelInfo;source?:Source;warning?:string}
+export interface ChatMessage {id:string;question_id:string;role:'user'|'assistant';content:string;created_at:string;mode:'user'|'local_slm'|'demo';scope?:'interview'|'general'|'unavailable';model?:ModelInfo;source?:Source;warning?:string}
 export interface Session {id:string;role:string;topic:string|null;difficulty:string|null;status:'active'|'completed'|'cancelled';questions:Question[];turns:Turn[];created_at:string;finished_at:string|null;trace:Trace[];mode:string;chat_messages?:ChatMessage[]}
 export interface StudySource {id:string;title:string;locator:string;excerpt:string}
-export interface StudyMaterial {id:string;kind:'notes'|'questions';request:string;mode:string;created_at:string;title:string;summary?:string;bullets?:string[];questions?:{question:string;answer:string;citation_ids:string[]}[];sources:StudySource[];warning?:string}
+export interface StudySection {heading:string;text:string;citation_ids:string[];mode:'local_slm'|'extractive'}
+export interface StudyMaterial {id:string;kind:'notes'|'questions';request:string;mode:'local_slm'|'extractive';created_at:string;title:string;summary?:string;summary_citation_ids?:string[];sections?:StudySection[];bullets?:string[];questions?:{question:string;answer:string;citation_ids:string[]}[];sources:StudySource[];warning?:string}
 export interface StudyDocument {id:string;title:string;file_name:string;character_count:number;chunk_count:number;created_at:string;status:string;excerpt?:string;materials?:StudyMaterial[]}
 export interface Overview {interviews_completed:number;questions_practiced:number;average_score:number|null;streak:number;topics_covered:number;score_trend:{date:string;score:number}[];recent_interviews:Session[];recommendations:string[]}
 export interface TopicScore {topic:string;score:number;answers:number}
-export interface Catalog {roles:string[];topics:string[];question_count:number;mode:string;model?:ModelInfo}
+export interface Catalog {roles:string[];topics:string[];question_count:number;mode:string;model?:ModelInfo;interview_options?:Record<string,Record<string,string[]>>}
 export interface PracticeSet {id:string;name:string;role:string;question_ids:string[];created_at:string}
 export interface SourceDocument {id:string;title:string;url:string;license:string;status:string;chunk_count:number;question_count:number;error?:string}
 export interface QueryResult {answer:string;questions:Question[];trace:Trace[];mode:string;model?:ModelInfo;warning?:string}
 export interface Workspace {catalog:Catalog;overview:Overview;topics:TopicScore[];questions:Question[];bookmarks:string[];sets:PracticeSet[];sources:SourceDocument[];sessions:Session[]}
-export type Page = 'dashboard'|'interview'|'library'|'feedback'|'analytics'|'knowledge';
+export type Page = 'dashboard'|'interview'|'library'|'feedback'|'analytics'|'resume'|'knowledge';

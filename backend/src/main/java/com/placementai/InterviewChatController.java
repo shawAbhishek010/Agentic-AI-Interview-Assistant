@@ -56,7 +56,7 @@ class InterviewChatController {
         var questionId = selected.get("id").toString();
         var history = messages.stream()
                 .filter(message -> questionId.equals(message.get("question_id")))
-                .map(message -> Map.of("role", message.get("role"), "content", message.get("content")))
+                .map(this::historyEntry)
                 .toList();
         history = history.subList(Math.max(0, history.size() - HISTORY_MESSAGES), history.size());
         var message = body.message().trim();
@@ -82,13 +82,20 @@ class InterviewChatController {
         }
         var answer = response.get("answer");
         var mode = response.get("mode");
+        var scope = response.getOrDefault("scope", "interview");
+        boolean validScope = "interview".equals(scope)
+                || ("general".equals(scope) && "local_slm".equals(mode))
+                || ("unavailable".equals(scope) && "demo".equals(mode));
         if (!(answer instanceof String content) || content.isBlank() || content.length() > 3000
-                || !("demo".equals(mode) || "local_slm".equals(mode))) {
+                || !("demo".equals(mode) || "local_slm".equals(mode)) || !validScope) {
             throw new ApiException(502, "Interview service returned an invalid chat reply. Please retry.");
         }
         var user = message(questionId, "user", message, "user", sentAt);
         var reply = message(questionId, "assistant", content.trim(), mode.toString(), Instant.now());
-        if (selected.get("source") instanceof Map<?, ?> source) reply.put("source", source);
+        reply.put("scope", scope);
+        if ("interview".equals(scope) && selected.get("source") instanceof Map<?, ?> source) {
+            reply.put("source", source);
+        }
         if (response.get("model") instanceof Map<?, ?> model) reply.put("model", model);
         if (response.get("warning") instanceof String warning && !warning.isBlank()) {
             reply.put("warning", warning.substring(0, Math.min(500, warning.length())));
@@ -102,6 +109,15 @@ class InterviewChatController {
 
     private List<Map<String, Object>> messages(Interview session) {
         return json.rows(session.chatJson == null ? "[]" : session.chatJson);
+    }
+
+    private Map<String, Object> historyEntry(Map<String, Object> message) {
+        var history = new LinkedHashMap<String, Object>();
+        history.put("role", message.get("role"));
+        history.put("content", message.get("content"));
+        var scope = message.get("scope");
+        if ("interview".equals(scope) || "general".equals(scope)) history.put("scope", scope);
+        return history;
     }
 
     private Map<String, Object> question(Interview session, String requestedId) {

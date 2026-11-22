@@ -1,6 +1,22 @@
 import {test,expect} from '@playwright/test';
+import type {Page} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+import {strFromU8, unzipSync} from 'fflate';
 
 test.beforeEach(async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Explore demo workspace'}).click();await expect(page.getByRole('heading',{name:'Welcome back, Student.'})).toBeVisible()});
+
+async function downloadWord(page: Page) {
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button',{name:'Download Word',exact:true}).click();
+  const file = await downloaded;
+  expect(file.suggestedFilename()).toMatch(/\.docx$/);
+  const archive = unzipSync(await readFile(await file.path()));
+  expect(archive['word/styles.xml']).toBeDefined();
+  const document = strFromU8(archive['word/document.xml']);
+  expect(document).not.toMatch(/(?:Request|Mode):|\bchunk-\d+/);
+  expect(document).toContain('>References</w:t>');
+  return document;
+}
 
 test('a request for help is explained and never graded or advanced',async({page})=>{
   test.slow();
@@ -29,13 +45,21 @@ test('personal documents produce requested notes and questions without admin per
   await page.getByLabel('Title (optional)').fill('My transaction lesson');
   await page.getByRole('button',{name:'Upload private document',exact:true}).click();
   await expect(page.getByRole('heading',{name:'My transaction lesson',exact:true})).toBeVisible();
-  await page.getByRole('textbox',{name:'Study material request'}).fill('Explain atomicity in simple language with a short example.');
+  const notesRequest = 'Explain atomicity in simple language with a short example.';
+  await page.getByRole('textbox',{name:'Study material request'}).fill(notesRequest);
   await page.getByRole('button',{name:'Generate notes',exact:true}).click();
   await expect(page.locator('.study-summary')).toContainText(/atomic|transaction|changes/i,{timeout:65000});
+  const notesWord = await downloadWord(page);
+  expect(notesWord).toContain('>Overview</w:t>');
+  expect(notesWord).toContain('w:pStyle w:val="Heading1"');
+  expect(notesWord).not.toContain(notesRequest);
   await page.getByRole('button',{name:'Create practice questions',exact:true}).click();
   await page.getByLabel('Study question count').selectOption('2');
   await page.getByRole('textbox',{name:'Study material request'}).fill('Make two questions about atomicity and durability.');
+  const questionsResponse = page.waitForResponse(response => response.url().endsWith('/generate')
+    && response.request().method() === 'POST', {timeout:65000});
   await page.getByRole('button',{name:'Generate questions',exact:true}).click();
+  expect((await questionsResponse).status()).toBe(201);
   await expect(page.locator('.study-question')).toHaveCount(2,{timeout:65000});
   await page.locator('.study-citations summary').click();
   await expect(page.locator('.study-citations')).toContainText('Text, passage 1');
@@ -45,9 +69,12 @@ test('personal documents produce requested notes and questions without admin per
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.screenshot({path:'../docs/screenshots/10-personal-study-mobile.png',fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:1440,height:1000});
-  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Download',exact:true}).click();expect((await download).suggestedFilename()).toMatch(/\.md$/);
   await page.reload();await page.getByRole('button',{name:'My study documents',exact:true}).click();await page.getByRole('button',{name:/My transaction lesson/}).first().click();
   await expect(page.getByRole('heading',{name:'Saved study materials'})).toBeVisible();
+  const questionsWord = await downloadWord(page);
+  expect(questionsWord).toContain('>Answer. </w:t>');
+  expect(questionsWord).toContain('[1]');
+  expect(questionsWord).not.toContain('Make two questions about atomicity and durability.');
 });
 
 test('voice conversation sends final transcript once and speaks the assistant reply',async({page})=>{

@@ -30,8 +30,8 @@ def client(monkeypatch):
     return TestClient(main.app, headers={"X-Internal-Token": "chat-internal-key"})
 
 
-def completion(answer="A closure keeps the variables from its lexical scope.", supported=True):
-    return {"choices": [{"message": {"content": json.dumps({"supported": supported, "answer": answer})}}], "usage": {"completion_tokens": 20}}
+def completion(answer="A closure keeps the variables from its lexical scope.", scope="interview"):
+    return {"choices": [{"message": {"content": json.dumps({"scope": scope, "answer": answer})}}], "usage": {"completion_tokens": 20}}
 
 
 def install_transport(monkeypatch, handler):
@@ -54,9 +54,11 @@ def test_contextual_cross_questions_use_snapshot_and_recent_dialogue_without_ret
         assert request.headers["Authorization"] == "Bearer chat-test-private-key"
         payload = json.loads(request.content)
         assert payload["max_tokens"] == 160 and payload["stream"] is False
-        assert request.extensions["timeout"]["read"] == 25
+        assert payload["response_format"]["type"] == "json_object"
+        assert payload["response_format"]["schema"]["required"] == ["scope", "answer"]
+        assert request.extensions["timeout"]["read"] == 30
         system, prompt = [item["content"] for item in payload["messages"]]
-        assert "untrusted data" in system and "unsupported" in system
+        assert "untrusted data" in system and "explicit new topic" in system
         context = json.loads(prompt)
         assert context["current_question"] == question.question
         assert context["reference_answer"] == question.answer[:1200]
@@ -69,9 +71,48 @@ def test_contextual_cross_questions_use_snapshot_and_recent_dialogue_without_ret
     assert result.status_code == 200, result.text
     data = result.json()
     assert data["mode"] == "local_slm" and data["model"]["local"] is True
-    assert data["source"] == before["source"]
+    assert data["scope"] == "interview" and data["source"] == before["source"]
     assert question.model_dump() == before
     assert history[0]["content"] == "I am unsure about lexical scope."
+
+
+@pytest.mark.parametrize("message", ["Which one is more common for data science?",
+                                    "Before we go back to the interview question, which one is more common for data science?"])
+def test_detour_uses_latest_question_and_general_history_without_a_source_citation(enabled, client, question, monkeypatch, message):
+    history = [{"role": "user", "content": "How do JavaScript and Python differ?"},
+               {"role": "assistant", "content": "JavaScript is used in browsers, while Python is common for data analysis.", "scope": "general"}]
+    reply = "Python is more common for data science, with libraries such as pandas and NumPy."
+
+    def handler(request):
+        payload = json.loads(request.content)
+        context = json.loads(payload["messages"][-1]["content"])
+        assert list(context)[-1] == "student_message" and context["student_message"] == message
+        assert context["recent_messages"] == history
+        return httpx.Response(200, json=completion(reply, scope="general"))
+
+    install_transport(monkeypatch, handler)
+    result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": message, "history": history})
+    assert result.status_code == 200
+    assert result.json()["answer"] == reply
+    assert result.json()["scope"] == "general" and result.json()["source"] is None
+
+
+def test_explicit_return_to_interview_uses_the_saved_reference_after_a_detour(enabled, client, question, monkeypatch):
+    history = [{"role": "assistant", "content": "Python is common in data analysis.", "scope": "general"}]
+    message = "Back to the original interview question. What does lexical scope mean?"
+
+    def handler(request):
+        payload = json.loads(request.content)
+        assert payload["response_format"]["schema"]["properties"]["scope"] == {"const": "interview"}
+        assert "returned to the original interview" in payload["messages"][0]["content"]
+        assert json.loads(payload["messages"][-1]["content"])["recent_messages"] == []
+        return httpx.Response(200, json=completion())
+
+    install_transport(monkeypatch, handler)
+    result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": message, "history": history})
+    assert result.status_code == 200
+    assert result.json()["scope"] == "interview"
+    assert result.json()["source"] == question.source.model_dump()
 
 
 def test_worst_case_unicode_context_fits_local_context_and_preserves_last_six_roles(enabled, question):
@@ -108,7 +149,7 @@ def test_follow_up_reply_uses_saved_main_answer_and_actual_interviewer_prompt(en
         assert context["interviewer_follow_up"] == follow_up
         assert context["student_message"] == "It remains accessible through the returned function."
         assert context["current_question"] == question.question
-        assert "do not add scores or a new interview question" in system
+        assert "do not add scores or a new interview question" in system.lower()
         assert len(system.encode("utf-8")) + len(prompt.encode("utf-8")) <= _CHAT_INPUT_BYTES
         return httpx.Response(200,json=completion("Yes. The closure retains access to the captured lexical variable."))
 
@@ -119,6 +160,35 @@ def test_follow_up_reply_uses_saved_main_answer_and_actual_interviewer_prompt(en
     assert response.status_code == 200
     assert response.json()["mode"] == "local_slm"
     assert response.json()["source"] == question.source.model_dump()
+
+
+def test_generated_answer_coaching_leaves_rubric_and_follow_up_unchanged(enabled, client, question, monkeypatch):
+    monkeypatch.setenv("LOCAL_SLM_FOLLOWUPS", "false")
+    answer = "It remembers variables from the outer function."
+    coaching_text = "You got the key idea. The returned function can still use those variables after the outer function finishes."
+    payload = {"question_id": question.id, "answer": answer}
+
+    def handler(request):
+        context = json.loads(json.loads(request.content)["messages"][1]["content"])
+        assert context["candidate_answer"] == answer
+        assert context["current_question"] == question.question
+        assert "interviewer_follow_up" not in context
+        return httpx.Response(200, json=completion(coaching_text))
+
+    install_transport(monkeypatch, handler)
+    coached_response = client.post("/internal/agent/evaluate", json=payload)
+    assert coached_response.status_code == 200
+    coached = coached_response.json()
+    coaching = coached.pop("coaching")
+    assert coaching["mode"] == "local_slm" and coaching["text"] == coaching_text
+    assert coaching["model"]["model_id"] == "Llama-3.2-3B-Instruct"
+
+    monkeypatch.setenv("SLM_ENABLED", "false")
+    baseline_response = client.post("/internal/agent/evaluate", json=payload)
+    assert baseline_response.status_code == 200
+    baseline = baseline_response.json()
+    assert baseline.pop("coaching") is None
+    assert coached == baseline
 
 
 def test_chat_requires_internal_auth_before_inference(client, question, monkeypatch):
@@ -151,42 +221,41 @@ def test_chat_rejects_invalid_messages_history_and_extra_fields(client, question
     assert client.post("/internal/agent/chat", json=payload).status_code == 422
 
 
-def test_disabled_chat_does_not_send_network_requests_and_returns_bounded_cited_reference(client, question, monkeypatch):
+def test_disabled_chat_does_not_send_network_requests_or_substitute_a_reference(client, question, monkeypatch):
     monkeypatch.setenv("SLM_ENABLED", "false")
 
     def forbidden_network(request):
         raise AssertionError("Disabled inference must not send a network request")
 
     install_transport(monkeypatch, forbidden_network)
-    snapshot = question.model_copy(update={"answer": "Source concept. " * 1800}).model_dump()
-    result = client.post("/internal/agent/chat", json={"question": snapshot, "message": "Please explain it"})
+    result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": "What's the difference between JavaScript and Python?"})
     data = result.json()
     assert result.status_code == 200 and data["mode"] == "demo"
-    assert data["warning"] and data["source"] == snapshot["source"]
-    assert "Source concept." in data["answer"] and len(data["answer"]) < 3000
-    assert data["model"] is None
+    assert data["scope"] == "unavailable" and data["source"] is None and data["model"] is None
+    assert "try again" in data["answer"]
 
 
-@pytest.mark.parametrize("failure", ["timeout", "down", "unsupported", "invalid", "url"])
-def test_chat_timeout_unavailable_or_unsupported_response_returns_honest_reference_fallback(enabled, client, question, monkeypatch, failure):
+@pytest.mark.parametrize("failure", ["timeout", "down", "empty", "invalid", "url", "scope"])
+def test_failed_local_reply_does_not_substitute_the_interview_reference(enabled, client, question, monkeypatch, failure):
     def handler(request):
         if failure == "timeout":
             raise httpx.ReadTimeout("private transport details must not leak", request=request)
         if failure == "down":
             return httpx.Response(503, text="chat-test-private-key private input")
-        if failure == "unsupported":
-            return httpx.Response(200, json=completion("", supported=False))
+        if failure == "empty":
+            return httpx.Response(200, json=completion(""))
         if failure == "url":
             return httpx.Response(200, json=completion("See https://invented.example for the answer."))
+        if failure == "scope":
+            return httpx.Response(200, json=completion(scope="invented"))
         return httpx.Response(200, json={"choices": [{"message": {"content": "not valid JSON"}}]})
 
     install_transport(monkeypatch, handler)
-    result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": "What is the weather today?" if failure == "unsupported" else "Please explain it"})
+    result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": "What is the weather today?" if failure == "empty" else "Please explain it"})
     data = result.json()
     assert result.status_code == 200 and data["mode"] == "demo"
-    assert question.answer in data["answer"]
-    assert data["source"] == question.source.model_dump() and data["warning"]
-    assert "private" not in data["warning"] and "invented.example" not in data["answer"]
+    assert data["scope"] == "unavailable" and data["source"] is None
+    assert "try again" in data["answer"]
 
 
 def test_busy_chat_uses_same_global_inference_budget(enabled, client, question):
@@ -194,6 +263,6 @@ def test_busy_chat_uses_same_global_inference_budget(enabled, client, question):
     try:
         result = client.post("/internal/agent/chat", json={"question": question.model_dump(), "message": "What do you mean?"})
         assert result.status_code == 200 and result.json()["mode"] == "demo"
-        assert result.json()["source"] == question.source.model_dump()
+        assert result.json()["scope"] == "unavailable" and result.json()["source"] is None
     finally:
         _INFERENCE_SLOT.release()

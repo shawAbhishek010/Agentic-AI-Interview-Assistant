@@ -15,11 +15,11 @@ from pydantic import ValidationError
 from pypdf import PdfReader
 from docx import Document as WordDocument
 
-from .engine import Bank
+from .engine import Bank, is_theory_prompt
 from .models import PlanRequest, EvaluateRequest, QueryRequest, Question, PlanResponse, Evaluation, QueryResponse, ChatRequest, ChatResponse
 from .local_slm import LocalSLM, LocalModelUnavailable
-from .models import Trace
-from . import study,speech
+from .models import InterviewCoaching, Trace
+from . import practice, study, speech
 
 logger = logging.getLogger("placement.agent")
 bank: Bank | None = None
@@ -41,6 +41,7 @@ def internal_auth(x_internal_token: str | None = Header(default=None)):
 app = FastAPI(title="Placement AI Agent",version="1.0.0",description="Private, source-grounded demo/rule-based interview workflow. No paid model calls.",dependencies=[])
 app.include_router(study.router,dependencies=[Depends(internal_auth)])
 app.include_router(speech.router,dependencies=[Depends(internal_auth)])
+app.include_router(practice.router, dependencies=[Depends(internal_auth)])
 
 
 @app.middleware("http")
@@ -115,9 +116,22 @@ def plan(payload:PlanRequest):
 def evaluate(payload:EvaluateRequest):
     store=get_bank()
     result=store.evaluate(payload.question_id,payload.answer)
+    question=store.evaluation_question(payload.question_id)
+    model=LocalSLM()
+    if model.enabled:
+        try:
+            generated=model.conversational_answer(
+                question,"Compare my candidate_answer with the reference_answer. If I missed an exception or made a wrong claim, explain the correction first. Otherwise, tell me one thing I got right.",
+                [],candidate_answer=payload.answer,grounded_only=True,
+            )
+            result=result.model_copy(update={"coaching": InterviewCoaching(text=generated.text,model=generated.model)})
+        except LocalModelUnavailable:
+            pass  # The saved rubric and follow-up already provide source-based feedback.
     if os.getenv("LOCAL_SLM_FOLLOWUPS","false").lower()=="true":
         try:
-            generated=LocalSLM().follow_up(store.by_id[payload.question_id],payload.answer)
+            generated=model.follow_up(question,payload.answer)
+            if not is_theory_prompt(generated.text):
+                raise LocalModelUnavailable("Generated follow-up asked for a coding exercise.")
             result=result.model_copy(update={"follow_up":generated.text,"follow_up_mode":"local_slm","model":generated.model})
         except LocalModelUnavailable:
             result=result.model_copy(update={"warning":"Local SLM was unavailable or exceeded its budget. Showing the source-grounded follow-up template."})
@@ -144,16 +158,15 @@ def sources():
 
 @app.post("/internal/agent/chat",response_model=ChatResponse,dependencies=[Depends(internal_auth)])
 def chat(payload:ChatRequest):
-    # The authenticated gateway supplies the saved, user-owned question snapshot.
-    # Do not retrieve again: pronouns and examples refer to this exact question.
+    # The saved question is available for tutoring; a detour uses the ongoing chat.
     try:
         generated=LocalSLM().conversational_answer(payload.question,payload.message,payload.history,
                 candidate_answer=payload.candidate_answer,interviewer_follow_up=payload.interviewer_follow_up)
-        return ChatResponse(answer=generated.text,mode="local_slm",source=payload.question.source,model=generated.model)
+        source=payload.question.source if generated.scope=="interview" else None
+        return ChatResponse(answer=generated.text,mode="local_slm",scope=generated.scope,source=source,model=generated.model)
     except LocalModelUnavailable:
-        prefix=f'Here is the reference explanation for "{payload.question.question[:200]}":\n\n'
-        answer=prefix+payload.question.answer[:2999-len(prefix)]
-        return ChatResponse(answer=answer,mode="demo",source=payload.question.source,warning="A grounded local reply could not be produced. Showing the current cited reference instead.")
+        return ChatResponse(answer="I couldn’t answer that just now. You can try again or keep going with the interview.",
+                            mode="demo",scope="unavailable")
 
 
 def parse_document(filename, content):

@@ -8,9 +8,10 @@ test.beforeEach(async({page})=>{
 
 test('all six screens render actual data and an empty account has no invented progress',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await expect(page.getByText('Your story starts with one session')).toBeVisible();
+  await expect(page.getByText('No practice scores yet')).toBeVisible();
   await page.screenshot({path:'../docs/screenshots/01-overview.png',fullPage:true});
-  const screens=[['AI Interview','Meet your practice partner.'],['Practice Library','A little practice. A lot of possibility.'],['Feedback & Review','Good practice. Better perspective.'],['Progress Analytics','Small steps. Visible progress.'],['Knowledge Base','Knowledge you can trace.']];
+  const screens=[['AI Interview','AI interview'],['Practice Library','Practice library'],['Feedback & Analytics','Feedback & review'],['Resume Mock','Resume Mock'],['Knowledge Base','Knowledge base']];
+  await expect(page.getByRole('navigation',{name:'Main navigation'}).getByRole('link')).toHaveCount(6);
   for(const [label,title] of screens){await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:label,exact:true}).click();await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();if(label==='Practice Library'){await expect(page.locator('.library-card').first()).toBeVisible();await page.screenshot({path:'../docs/screenshots/03-library.png',fullPage:true})}}
   await expect(page.getByText('30 seconds of interviews',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Import a source'})).toBeDisabled();
@@ -18,6 +19,7 @@ test('all six screens render actual data and an empty account has no invented pr
 });
 
 test('a full five-question interview persists feedback and real analytics',async({page})=>{
+  test.setTimeout(240000); // Each answer may also wait for bounded CPU inference.
   await page.getByRole('button',{name:'Start an interview',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:'Start interview',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Your interview room',exact:true})).toBeVisible();
@@ -26,14 +28,14 @@ test('a full five-question interview persists feedback and real analytics',async
     const answer=page.getByRole('textbox',{name:'Your interview answer'});
     await answer.fill('I would explain the concept with a concrete example, then discuss scope, asynchronous callbacks, state and browser behavior, checking the reference for the exact source concepts.');
     await page.getByRole('button',{name:'Submit answer',exact:true}).click();
-    await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible();
+    await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible({timeout:50000});
     if(i<4)await page.getByRole('button',{name:'Next question',exact:true}).click();
     else await page.getByRole('button',{name:'Finish & review',exact:true}).click();
   }
-  await expect(page.getByRole('heading',{name:'Good practice. Better perspective.',exact:true})).toBeVisible();
-  await expect(page.getByText('A source to learn from',{exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Feedback & review',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Reference answer',exact:true})).toBeVisible();
   await page.screenshot({path:'../docs/screenshots/04-feedback.png',fullPage:true});
-  await page.getByRole('navigation').getByRole('link',{name:'Progress Analytics',exact:true}).click();
+  await page.getByRole('button',{name:'Analytics',exact:true}).click();
   await expect(page.getByText('Completed interviews',{exact:true})).toBeVisible();
   await expect(page.locator('.analytics-stats .stat-card').nth(1).locator('.stat-value')).toHaveText('1');
   await expect(page.locator('.analytics-stats .stat-card').nth(2).locator('.stat-value')).toHaveText('5');
@@ -43,8 +45,46 @@ test('a full five-question interview persists feedback and real analytics',async
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('.history-row').first().getByRole('button',{name:/Delete interview/}).click();
   await expect(page.locator('.analytics-stats .stat-card').nth(2).locator('.stat-value')).toHaveText('0');
-  await page.getByRole('navigation').getByRole('link',{name:'Feedback & Review',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Your next insight starts with an answer'})).toBeVisible();
+  await page.getByRole('button',{name:'Feedback',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'No recorded practice'})).toBeVisible();
+});
+
+test('interview setup offers workable theory topics and starts Full Stack Security',async({page})=>{
+  await page.getByRole('button',{name:'Start an interview',exact:true}).click();
+  const dialog=page.getByRole('dialog');
+  const role=dialog.getByLabel('Your target role');
+  const topic=dialog.getByLabel('Focus topic');
+  await role.selectOption('Python Developer');
+  await expect(topic.locator('option')).toHaveText(['A balanced mix','Python']);
+  await role.selectOption('Full Stack Developer');
+  await topic.selectOption('Security');
+  await expect(dialog.getByLabel('Difficulty').locator('option')).toHaveText(['Mixed difficulty']);
+  const planned=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/api/interviews'));
+  await dialog.getByRole('button',{name:'Start interview',exact:true}).click();
+  const response=await planned;
+  expect(response.status()).toBe(201);
+  const session=await response.json();
+  expect(session.questions).toHaveLength(5);
+  expect(new Set(session.questions.map((q:{id:string})=>q.id)).size).toBe(5);
+  expect(session.questions.every((q:{topic:string;follow_up:string})=>q.topic==='Security'&&q.follow_up)).toBe(true);
+  await expect(page.locator('.stage-count')).toHaveText('Question 1 / 5');
+});
+
+test('an older session with a retired exercise opens the new theory interview prompt',async({page})=>{
+  await page.getByRole('button',{name:'Start an interview',exact:true}).click();
+  const planned=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/api/interviews'));
+  await page.getByRole('dialog').getByRole('button',{name:'Start interview',exact:true}).click();
+  const session=await (await planned).json();
+  await expect(page.getByRole('heading',{name:'Your interview room'})).toBeVisible();
+  session.questions[0]={...session.questions[0],id:'batches',question:'Create a function to count recipe batches.'};
+  await page.route('**/api/interviews',route=>route.request().method()==='GET'
+    ? route.fulfill({json:[session]})
+    : route.continue());
+  await page.reload();
+  await expect(page.getByRole('heading',{name:'Start a theory interview'})).toBeVisible();
+  await expect(page.getByText('Create a function to count recipe batches.')).toHaveCount(0);
+  await page.getByRole('button',{name:'Start a theory interview'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:'Start interview',exact:true})).toBeEnabled();
 });
 
 test('knowledge retrieval cites a real source and unsupported queries return no fabricated answer',async({page})=>{
@@ -93,23 +133,33 @@ test('microphone denial leaves a working typed-answer path',async({page})=>{
   await expect(page.getByText('Microphone access was denied. Type your answer below to continue.',{exact:true})).toBeVisible({timeout:20000});
   await page.getByRole('textbox',{name:'Your interview answer'}).fill('I can continue with a typed answer after denying microphone access.');
   await page.getByRole('button',{name:'Submit answer',exact:true}).click();
-  await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible();
+  await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible({timeout:50000});
 });
 
 test('mobile navigation and main screens avoid horizontal overflow',async({page})=>{
   await page.setViewportSize({width:390,height:844});
-  for(const [label,title] of [['Practice Library','A little practice. A lot of possibility.'],['AI Interview','Meet your practice partner.'],['Knowledge Base','Knowledge you can trace.'],['Overview','Welcome back, Student.']]){
+  for(const [label,title] of [['Practice Library','Practice library'],['AI Interview','AI interview'],['Knowledge Base','Knowledge base'],['Overview','Welcome back, Student.']]){
     await page.getByRole('button',{name:'Open navigation'}).click();
     await page.getByRole('navigation').getByRole('link',{name:label,exact:true}).click();
     await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
     await expect(page.locator('.sidebar')).not.toBeInViewport();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    if(label==='Knowledge Base'){
+      await page.getByRole('link',{name:'Skip to content'}).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#page-start')).toBeFocused();
+      await expect(page).toHaveURL(/#knowledge$/);
+    }
   }
   await page.getByRole('button',{name:'Open navigation'}).click();
   await page.keyboard.press('Escape');
   await expect(page.locator('.sidebar')).not.toBeInViewport();
   await expect(page.getByRole('button',{name:'Open navigation'})).toBeFocused();
   await page.screenshot({path:'../docs/screenshots/07-mobile.png',fullPage:true});
+  await page.setViewportSize({width:768,height:1024});
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Knowledge Base',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Agent workspace',exact:true})).toBeInViewport();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
 test('speech playback failure is visible and typing remains available',async({page})=>{

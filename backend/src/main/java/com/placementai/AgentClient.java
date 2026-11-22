@@ -55,6 +55,9 @@ class AgentClient {
     Map<String,Object> voiceStatus() {return request(HttpMethod.GET,"/internal/voice/status",null,MAP);}
     byte[] speech(Object body) {return request(HttpMethod.POST,"/internal/voice/speech",body,BYTES);}
     Map<String,Object> generateStudy(Object body) {return request(HttpMethod.POST,"/internal/documents/generate",body,MAP);}
+    Map<String,Object> codingChallenges() {return request(HttpMethod.GET,"/internal/coding/challenges",null,MAP);}
+    Map<String,Object> codingCoach(Object body) {return request(HttpMethod.POST,"/internal/coding/coach",body,MAP);}
+    Map<String,Object> resumePlan(Object body) {return request(HttpMethod.POST,"/internal/resume-mocks/plan",body,MAP);}
     Map<String,Object> extractDocument(MultipartFile file,String title) {return multipart("/internal/documents/extract",file,Map.of("title",title));}
     List<Map<String,Object>> sources() {return request(HttpMethod.GET,"/internal/sources",null,LIST);}
     Map<String,Object> index(String id) {return request(HttpMethod.POST,"/internal/sources/"+safeId(id)+"/index",null,MAP);}

@@ -1,21 +1,91 @@
-import {ArrowRight,ArrowUpRight,BookOpen,CheckCircle2,Code2,Flame,Play,Target,Trophy,Sparkles,Clock,Layers,MessagesSquare} from 'lucide-react';
-import {Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis} from 'recharts';
+import {ArrowRight,ChevronRight} from 'lucide-react';
+import {CartesianGrid,Line,LineChart,ResponsiveContainer,Tooltip,XAxis,YAxis} from 'recharts';
 import type {Page,Session,User,Workspace} from '../types';
-import {ArrowLink,Avatar,Badge,Button,Empty,formatDate,PageHeading,Panel} from '../components';
+import {ArrowLink,Badge,Button,Empty,formatDate,PageHeading,Panel} from '../components';
 
-export function Dashboard({data,user,role,setRole,start,navigate,openSession}:{data:Workspace;user:User;role:string;setRole:(r:string)=>void;start:()=>void;navigate:(p:Page)=>void;openSession:(s:Session)=>void}){
-  const {overview}=data;
-  const stats=[{label:'Interviews completed',value:overview.interviews_completed,icon:Trophy,tone:'violet',note:'Every session is a step forward'},{label:'Average practice score',value:overview.average_score===null?'—':`${overview.average_score}%`,icon:Target,tone:'cyan',note:'Demo rubric · concept coverage'},{label:'Current practice streak',value:overview.streak,icon:Flame,tone:'amber',note:overview.streak?'Keep the momentum going':'Your first day starts here'},{label:'Questions practiced',value:overview.questions_practiced,icon:Layers,tone:'blue',note:`Across ${overview.topics_covered} topics`}];
-  const topics=['JavaScript','React','Node.js'].filter(t=>data.catalog.topics.includes(t));
-  return <><PageHeading eyebrow="YOUR PLACEMENT WORKSPACE" title={`Welcome back, ${user.name.split(' ')[0]}.`} description="A little more prepared. A little more confident. Let’s make your next move." action={<div className="today-date"><span className="status-dot"/> {new Date().toLocaleDateString(undefined,{weekday:'short',month:'long',day:'numeric'})}</div>}/>
-    <section className="ready-panel"><div className="hero-content"><Badge><Sparkles size={13}/> BUILT FOR YOUR NEXT BIG THING</Badge><h2>Your next interview.<br/><span>Your best first impression.</span></h2><p>Practice with an AI-style interviewer, learn from every answer,<br className="desktop-break"/> and turn preparation into confidence.</p><div className="hero-actions"><Button onClick={start}><Play size={16} fill="currentColor"/>Start an interview <ArrowRight size={16}/></Button><label className="role-select"><span className="sr-only">Target role</span><select aria-label="Target role" value={role} onChange={e=>setRole(e.target.value)}>{data.catalog.roles.map(r=><option key={r}>{r}</option>)}</select></label></div><div className="hero-footnote"><CheckCircle2 size={13}/>5 questions <i/>Source-backed answers <i/>Your own pace</div></div><div className="hero-avatar"><div className="avatar-caption"><span className="status-dot"/>YOUR PRACTICE PARTNER</div><Avatar/><div className="avatar-bubble"><MessagesSquare size={17}/><span>Let’s get you interview-ready.</span></div></div></section>
-    <div className="stats-grid">{stats.map(({label,value,icon:Icon,tone,note})=><div className="stat-card" key={label}><div className="stat-top"><span>{label}</span><div className={`stat-icon ${tone}`}><Icon size={18}/></div></div><div className="stat-value">{value}{label==='Current practice streak'?<small>days</small>:null}</div><p>{note}</p></div>)}</div>
-    <div className="dashboard-mid"><Panel title="Your progress, in perspective" eyebrow="KEEP SHOWING UP" action={<Badge tone="subtle">Last 30 days</Badge>} className="trend-panel">{overview.score_trend.length?<ScoreChart data={overview.score_trend}/>:<Empty title="Your story starts with one session" description="Complete a few answers and watch your practice scores take shape here." icon={<ChartEmpty/>} action={<button className="text-button" onClick={start}>Start your first interview <ArrowRight size={15}/></button>}/>}<div className="chart-caption"><span><i/>Practice score</span><small>Transparent demo rubric · not an exam grade</small></div></Panel><Panel title="A good next step" eyebrow="YOUR PRACTICE PLAN" className="next-step-panel"><div className="next-step-feature"><span className="recommend-icon"><Target size={22}/></span><strong>{overview.questions_practiced?'Keep building on what you know.':'Let’s find your starting point.'}</strong><p>{overview.recommendations[0]}</p><Button variant="secondary" onClick={start}>Practice your role <ArrowUpRight size={16}/></Button></div><div className="mini-next"><BookOpen size={17}/><div><strong>Explore the question bank</strong><span>{data.catalog.question_count} licensed questions, ready when you are.</span></div><button className="icon-button" aria-label="Explore question bank" onClick={()=>navigate('library')}><ArrowRight size={17}/></button></div></Panel></div>
-    <div className="section-heading"><div><h2>A little focus goes a long way</h2><p>Pick a topic. Build a stronger foundation.</p></div><ArrowLink onClick={()=>navigate('library')}>View practice library</ArrowLink></div><div className="topic-preview-grid">{topics.map((topic,i)=><button className="topic-preview" key={topic} onClick={()=>navigate('library')}><span className={`topic-icon topic-${i}`}><Code2 size={22}/></span><div><h3>{topic}</h3><p>{data.questions.filter(q=>q.topic===topic).length} source-backed questions</p></div><ArrowUpRight size={19}/></button>)}</div>
-    <Panel title="Recent interviews" action={<ArrowLink onClick={()=>navigate('analytics')}>View all activity</ArrowLink>} className="recent-panel">{overview.recent_interviews.length?<div className="session-table"><div className="session-table-head"><span>INTERVIEW</span><span>DATE</span><span>PROGRESS</span><span>STATUS</span><span/></div>{overview.recent_interviews.map(s=><button className="session-row" onClick={()=>openSession(s)} key={s.id}><span className="session-name"><span className="session-icon"><BotMini/></span><span><strong>{s.role}</strong><small>{s.topic||'Mixed topics'} · {s.difficulty||'Mixed difficulty'}</small></span></span><span>{formatDate(s.created_at,true)}</span><span>{s.turns.length} / 5 answers</span><span><Badge tone={s.status==='completed'?'cyan':s.status==='active'?'violet':'subtle'}>{s.status}</Badge></span><ChevronArrow/></button>)}</div>:<div className="recent-empty"><span><Clock size={21}/></span><div><h3>Your first interview belongs here</h3><p>Start a session and we’ll save your questions, answers, and feedback.</p></div><Button variant="secondary" onClick={start}>Start practicing <ArrowRight size={15}/></Button></div>}</Panel>
-  </>
+export function Dashboard({data,user,role,setRole,start,navigate,openSession,openTopic}:{
+  data:Workspace;user:User;role:string;setRole:(role:string)=>void;start:()=>void;
+  navigate:(page:Page)=>void;openSession:(session:Session)=>void;openTopic:(topic:string)=>void;
+}){
+  const {overview,catalog}=data;
+  const stats=[
+    {label:'Interviews completed',value:overview.interviews_completed,detail:'Last 30 days'},
+    {label:'Questions practiced',value:overview.questions_practiced,detail:'Across '+overview.topics_covered+' topics'},
+    {label:'Average practice score',value:overview.average_score===null?'—':overview.average_score+'%',detail:'Concept coverage'},
+    {label:'Practice streak',value:overview.streak,detail:overview.streak===1?'Consecutive day':'Consecutive days'},
+  ];
+  const roleTopics=Object.keys(catalog.interview_options?.[role]??{}).filter(Boolean);
+  const topics=(roleTopics.length?roleTopics:catalog.topics).slice(0,3);
+
+  return <>
+    <PageHeading title={'Welcome back, '+user.name.split(' ')[0]+'.'} description="Prepare for your next interview and keep track of your practice."/>
+    <section className="ready-panel" aria-labelledby="interview-plan-title">
+      <div className="plan-heading">
+        <h2 id="interview-plan-title">Your next interview</h2>
+        <p>Five theory questions, typed or spoken answers, and cited feedback.</p>
+      </div>
+      <div className="plan-actions">
+        <label className="field">Target role
+          <select value={role} onChange={event=>setRole(event.target.value)}>
+            {catalog.roles.map(item=><option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <Button onClick={start}>Start an interview<ArrowRight size={16}/></Button>
+      </div>
+    </section>
+
+    <section aria-labelledby="overview-activity">
+      <div className="section-heading"><h2 id="overview-activity">Practice activity</h2><ArrowLink onClick={()=>navigate('analytics')}>View analytics</ArrowLink></div>
+      <dl className="stats-grid">{stats.map(stat=><div className="stat-card" key={stat.label}>
+        <dt className="stat-label">{stat.label}</dt>
+        <dd className="stat-value">{stat.value}</dd>
+        <dd className="stat-detail">{stat.detail}</dd>
+      </div>)}</dl>
+    </section>
+
+    <div className="dashboard-mid">
+      <Panel title="Practice score trend" action={<span className="small-text muted">Last 30 days</span>} className="trend-panel">
+        {overview.score_trend.length?<><ScoreChart data={overview.score_trend}/>
+          <p className="small-text muted chart-privacy-note">Daily average of rule-based practice scores.</p></>:<Empty
+          title="No practice scores yet"
+          description="Your score trend appears after you submit an answer."
+        />}
+      </Panel>
+      <Panel title="Practice topics" className="topic-panel">
+        <div className="dashboard-topics">{topics.map(topic=><button type="button" key={topic} onClick={()=>openTopic(topic)}>
+          <strong>{topic}</strong><small>{data.questions.filter(question=>question.topic===topic).length} questions</small><ChevronRight size={15}/>
+        </button>)}</div>
+        <ArrowLink onClick={()=>navigate('library')}>View practice library</ArrowLink>
+      </Panel>
+    </div>
+
+    <Panel title="Recent interviews" action={<ArrowLink onClick={()=>navigate('analytics')}>View all activity</ArrowLink>} className="recent-panel">
+      {overview.recent_interviews.length?<div className="table-scroll" tabIndex={0} role="region" aria-label="Recent interview results">
+        <table className="session-table">
+          <thead><tr><th scope="col">Interview</th><th scope="col">Date</th><th scope="col">Progress</th><th scope="col">Status</th></tr></thead>
+          <tbody>{overview.recent_interviews.map(session=><tr key={session.id}>
+            <th scope="row"><button className="session-name" onClick={()=>openSession(session)}><span>
+              <strong>{session.role}</strong><small>{session.topic||'Mixed topics'} · {session.difficulty||'Mixed difficulty'}</small>
+            </span><ChevronRight size={15}/></button></th>
+            <td>{formatDate(session.created_at,true)}</td><td>{session.turns.length} / 5 answers</td>
+            <td><Badge tone={session.status==='completed'?'cyan':session.status==='active'?'violet':'subtle'}>{session.status}</Badge></td>
+          </tr>)}</tbody>
+        </table>
+      </div>:<Empty title="No interviews yet" description="Your sessions and saved answers will appear here."/>}
+    </Panel>
+  </>;
 }
-function ChartEmpty(){return <div className="empty-chart-bars"><i/><i/><i/><i/><i/></div>}
-function BotMini(){return <MessagesSquare size={18}/>}
-function ChevronArrow(){return <ArrowUpRight size={17}/>}
-export function ScoreChart({data}:{data:{date:string;score:number}[]}){return <div className="score-chart" aria-label="Practice score trend"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{top:15,right:15,bottom:0,left:-20}}><defs><linearGradient id="score-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#9472ff" stopOpacity={0.3}/><stop offset="95%" stopColor="#9472ff" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#ffffff09" vertical={false}/><XAxis dataKey="date" tickFormatter={d=>formatDate(String(d),true)} stroke="#6f7890" fontSize={11} axisLine={false} tickLine={false} tickMargin={12}/><YAxis domain={[0,100]} tickFormatter={n=>`${n}%`} stroke="#6f7890" fontSize={11} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:'#171d31',border:'1px solid #343951',borderRadius:10,color:'#eee'}} formatter={value=>[`${value}%`,'Practice score']}/><Area type="monotone" dataKey="score" stroke="#a98bff" strokeWidth={2.5} fill="url(#score-fill)" dot={{fill:'#b29bff',r:4,stroke:'#151c32',strokeWidth:2}}/></AreaChart></ResponsiveContainer></div>}
+
+export function ScoreChart({data}:{data:{date:string;score:number}[]}){
+  return <div className="score-chart" aria-label="Practice score trend">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{top:12,right:18,bottom:8,left:0}}>
+        <CartesianGrid stroke="var(--line)" vertical={false}/>
+        <XAxis dataKey="date" tickFormatter={date=>formatDate(String(date),true)} stroke="var(--muted)" fontSize={12} axisLine={false} tickLine={false} tickMargin={10}/>
+        <YAxis domain={[0,100]} width={44} tickFormatter={value=>value+'%'} stroke="var(--muted)" fontSize={12} axisLine={false} tickLine={false}/>
+        <Tooltip contentStyle={{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:6,color:'var(--text)'}} formatter={value=>[value+'%','Practice score']}/>
+        <Line type="linear" dataKey="score" stroke="var(--accent)" strokeWidth={2} dot={{r:3,fill:'var(--accent)',stroke:'var(--surface)'}} isAnimationActive={false}/>
+      </LineChart>
+    </ResponsiveContainer>
+  </div>;
+}

@@ -3,6 +3,7 @@ import type {ChatMessage,Session} from '../src/types';
 
 const FOLLOW_UP='How would you choose between native HTML and an ARIA role?';
 const FOLLOW_UP_REPLY='Native HTML provides built-in semantics. Use an ARIA role when a native element cannot represent the interaction.';
+const COACHING='You explained what ARIA adds. Mention that a native HTML control already has built-in semantics.';
 
 interface DialogueHarness {
   spoken:string[];
@@ -98,7 +99,7 @@ test('mocked voice interview speaks visible feedback then accepts a follow-up wi
     answers++;
     const body=route.request().postDataJSON();
     expect(body.question_id).toBe(question.id);
-    await route.fulfill({json:{...session,turns:[{question_id:question.id,answer:body.answer,answered_at:new Date().toISOString(),evaluation:{score:55,accuracy:50,completeness:50,clarity:80,matched_concepts:['assistive technologies'],missing_concepts:['native HTML'],feedback:['Mention when native HTML already supplies the required semantics.'],follow_up:FOLLOW_UP,follow_up_mode:'demo',mode:'demo',source:question.source}}]}});
+    await route.fulfill({json:{...session,turns:[{question_id:question.id,answer:body.answer,answered_at:new Date().toISOString(),evaluation:{score:55,accuracy:50,completeness:50,clarity:80,matched_concepts:['assistive technologies'],missing_concepts:['native HTML'],feedback:['Matched 1 of 2 source concepts.'],follow_up:FOLLOW_UP,follow_up_mode:'demo',mode:'demo',source:question.source,coaching:{text:COACHING,mode:'local_slm',model:{provider:'llama.cpp',model_id:'Llama-3.2-3B-Instruct',status:'ready',local:true}}}}]}});
   });
   await page.route('**/api/interviews/*/chat',async route=>{
     chats++;
@@ -111,7 +112,7 @@ test('mocked voice interview speaks visible feedback then accepts a follow-up wi
   await say(page,'ARIA adds roles and properties for assistive technologies to understand custom controls.');
   await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible();
   const visibleReply=page.getByTestId('interviewer-reply').last();
-  await expect(visibleReply).toContainText(FOLLOW_UP);
+  await expect(visibleReply).toHaveText(`${COACHING} ${FOLLOW_UP}`);
   await expect.poll(async()=>normalize((await spoken(page)).at(-1)??'')).toBe(normalize(await visibleReply.innerText()));
   await endSpeech(page);
   await expect.poll(()=>recognitionStarts(page)).toBe(2);
@@ -127,6 +128,77 @@ test('mocked voice interview speaks visible feedback then accepts a follow-up wi
   expect(answers).toBe(1);expect(chats).toBe(1);
   await page.getByRole('button',{name:'Stop voice interview',exact:true}).click();
 });
+
+test('spoken uncertainty and short follow-up doubts stay in tutoring until the candidate answers',async({page})=>{
+  const session=await startInterview(page),question=session.questions[0];
+  const doubts=['Uh I dont no','why does that matter','another example'];
+  const replies=['Let’s take it one piece at a time.','It matters because it changes what a screen reader announces.','For example, consider a custom control with a visible label.'];
+  const chatMessages:ChatMessage[]=[];
+  const answered:string[]=[];
+  await page.route('**/api/interviews/*/chat',async route=>{
+    const body=route.request().postDataJSON(),index=chatMessages.length/2;
+    expect(body).toEqual({question_id:question.id,message:doubts[index]});
+    const result=chatResult(session,body.message,replies[index]);
+    chatMessages.push(...result.messages.map(m=>({...m,id:`${m.id}-${index}`})));
+    await route.fulfill({json:{messages:chatMessages,reply:chatMessages.at(-1)}});
+  });
+  await page.route('**/api/interviews/*/answers',async route=>{
+    const body=route.request().postDataJSON();
+    answered.push(body.answer);
+    await route.fulfill({json:{...session,chat_messages:chatMessages,turns:[{question_id:question.id,answer:body.answer,answered_at:new Date().toISOString(),evaluation:{score:0,accuracy:0,completeness:0,clarity:0,matched_concepts:[],missing_concepts:[],feedback:[],follow_up:question.follow_up,mode:'demo',source:question.source}}]}});
+  });
+  await beginVoiceInterview(page,session);
+  for(const [index,doubt] of doubts.entries()){
+    await say(page,doubt);
+    await expect(page.locator('.conversation-message.assistant p').last()).toHaveText(replies[index]);
+    await expect.poll(async()=>(await spoken(page)).at(-1)).toBe(replies[index]);
+    await expect(page.getByRole('button',{name:'Ready to answer'})).toBeVisible();
+    await expect(page.locator('.stage-count')).toHaveText('Question 1 / 5');
+    expect(answered).toEqual([]);
+    await endSpeech(page);
+    await expect.poll(()=>recognitionStarts(page)).toBe(index+2);
+  }
+  await say(page,'My answer is accessibility roles describe the purpose of a control.');
+  await expect(page.getByText('Your saved answer',{exact:true})).toBeVisible();
+  expect(answered).toEqual(['accessibility roles describe the purpose of a control.']);
+});
+
+test('a spoken technical question without punctuation goes directly to tutoring',async({page})=>{
+  const session=await startInterview(page),message='what does an empty alt attribute mean';
+  const reply='With an empty alt attribute, a screen reader can skip an image used only for decoration.';
+  await page.route('**/api/interviews/*/chat',async route=>{
+    expect(route.request().postDataJSON().message).toBe(message);
+    await route.fulfill({json:chatResult(session,message,reply)});
+  });
+  await beginVoiceInterview(page,session);
+  await say(page,message);
+  await expect(page.locator('.conversation-message.assistant p')).toHaveText(reply);
+  await expect(page.getByText('Your saved answer',{exact:true})).toHaveCount(0);
+});
+
+for(const [description,message] of [
+  ['an embedded request','before solving this question can I ask what is difference between JavaScript and python'],
+  ['a conversational question','Can we talk about the difference between JavaScript and Python'],
+]){
+  test(`${description} opens chat without showing an unrelated interview citation`,async({page})=>{
+    const session=await startInterview(page);
+    const response='JavaScript runs in web browsers. Python is widely used for automation and data analysis.';
+    await page.route('**/api/interviews/*/chat',async route=>{
+      expect(route.request().postDataJSON().message).toBe(message);
+      const result=chatResult(session,message,response);
+      const reply={...result.reply,mode:'local_slm',scope:'general',source:undefined};
+      await route.fulfill({json:{messages:[result.messages[0],reply],reply}});
+    });
+    await beginVoiceInterview(page,session);
+    await say(page,message);
+    const reply=page.locator('.conversation-message.assistant').last();
+    await expect(reply.locator('p')).toHaveText(response);
+    await expect(reply.getByText('General conversation')).toBeVisible();
+    await expect(reply.locator('.citation')).toHaveCount(0);
+    await expect.poll(async()=>(await spoken(page)).at(-1)).toBe(response);
+    await expect(page.getByText('Your saved answer',{exact:true})).toHaveCount(0);
+  });
+}
 
 for(const action of ['Stop voice interview','Pause interview']){
   test(`mocked ${action.toLowerCase()} prevents delayed replies from speaking or restarting capture`,async({page})=>{
