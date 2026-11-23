@@ -57,6 +57,8 @@ class AgentClient {
     Map<String,Object> generateStudy(Object body) {return request(HttpMethod.POST,"/internal/documents/generate",body,MAP);}
     Map<String,Object> codingChallenges() {return request(HttpMethod.GET,"/internal/coding/challenges",null,MAP);}
     Map<String,Object> codingCoach(Object body) {return request(HttpMethod.POST,"/internal/coding/coach",body,MAP);}
+    Map<String,Object> behavioralQuestions() {return request(HttpMethod.GET,"/internal/behavioral/questions",null,MAP);}
+    Map<String,Object> behavioralChat(Object body) {return request(HttpMethod.POST,"/internal/behavioral/chat",body,MAP);}
     Map<String,Object> resumePlan(Object body) {return request(HttpMethod.POST,"/internal/resume-mocks/plan",body,MAP);}
     Map<String,Object> extractDocument(MultipartFile file,String title) {return multipart("/internal/documents/extract",file,Map.of("title",title));}
     List<Map<String,Object>> sources() {return request(HttpMethod.GET,"/internal/sources",null,LIST);}

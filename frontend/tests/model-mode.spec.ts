@@ -6,7 +6,7 @@ const model={provider:'llama.cpp',model_id:'Llama-3.2-3B-Instruct',status:'ready
 const source={id:'fixture',title:'Mock test bank',url:'https://example.org/test-bank',license:'MIT',locator:'fixture only'};
 const questions=Array.from({length:5},(_,i)=>({id:`q${i+1}`,role:'Frontend Developer',topic:'JavaScript',difficulty:'beginner',question:`Explain closure example ${i+1}`,answer:'A closure retains lexical scope.',follow_up:'Give a closure example.',concepts:['lexical scope'],source}));
 
-async function mockWorkspace(page:Page,{status='ready',testFails=false,queryFallback=false,generatedFollowUp=false}={}){
+async function mockWorkspace(page:Page,{status='ready',testFails=false,queryFallback=false,generatedFollowUp=false,userRole='USER'}={}){
   const runtime={...model,status};
   const queryRequests:{use_model:boolean}[]=[];
   const sessions=generatedFollowUp?[{id:'saved-session',role:'Frontend Developer',topic:null,difficulty:null,status:'completed',questions,turns:[{question_id:'q1',answer:'A closure retains lexical scope.',answered_at:'2026-11-17T05:00:00Z',evaluation:{score:100,accuracy:100,completeness:100,clarity:100,matched_concepts:['lexical scope'],missing_concepts:[],feedback:['A rule-based concept score.'],follow_up:'How would closure lifetime affect memory?',follow_up_mode:'local_slm',mode:'demo',model:runtime,source}}],created_at:'2026-11-17T05:00:00Z',finished_at:'2026-11-17T05:01:00Z',trace:[],mode:'demo'}]:[];
@@ -14,10 +14,11 @@ async function mockWorkspace(page:Page,{status='ready',testFails=false,queryFall
   await page.route('**/api/**',async route=>{
     const path=new URL(route.request().url()).pathname;
     let result:unknown;
-    if(path==='/api/auth/demo')result={token:'mock-only',user:{id:'mock-user',name:'Student',email:'mock@example.org',role:'USER'}};
+    if(path==='/api/auth/demo')result={token:'mock-only',user:{id:'mock-user',name:'Student',email:'mock@example.org',role:userRole}};
     else if(path==='/api/catalog')result={roles:['Frontend Developer'],topics:['JavaScript'],question_count:5,mode:'demo',model:runtime};
     else if(path==='/api/analytics/overview')result={interviews_completed:0,questions_practiced:0,average_score:null,streak:0,topics_covered:0,score_trend:[],recent_interviews:[],recommendations:[]};
     else if(path==='/api/questions')result=questions;
+    else if(path==='/api/sources')result=[{...source,status:'indexed',question_count:5,chunk_count:5}];
     else if(path==='/api/interviews')result=sessions;
     else if(path==='/api/model/status')result=runtime;
     else if(path==='/api/model/test'){
@@ -77,11 +78,21 @@ test('mocked RAG queries require explicit SLM opt-in and label the returned mode
   await expect(page.locator('.rag-answer')).toContainText('This mock local answer explains lexical scope.');
   expect(requests[1].use_model).toBe(true);
   await expect(page.getByText(/Local SLM · Llama-3.2-3B-Instruct · Built with Llama/)).toBeVisible();
-  await page.getByRole('button',{name:'Public sources',exact:true}).click();
+  await page.getByRole('button',{name:'Ask the knowledge base',exact:true}).click();
   await page.getByRole('textbox',{name:'Ask the knowledge base'}).fill('What is a closure?');
   await page.getByRole('button',{name:'Ask',exact:true}).click();
   await expect(page.locator('.rag-answer')).toContainText('A closure retains lexical scope.');
   expect(requests[2].use_model).toBe(false);
+});
+
+test('mocked administrator can still open the source library and import form',async({page})=>{
+  await mockWorkspace(page,{userRole:'ADMIN'});
+  await expect(page.getByRole('textbox',{name:'Ask the knowledge base'})).toBeVisible();
+  await page.getByRole('button',{name:'Source library',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Source library',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Reindex',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Import a source',exact:true}).click();
+  await expect(page.getByRole('dialog',{name:'Import a public source'})).toBeVisible();
 });
 
 test('mocked SLM fallback shows its warning and the source answer mode',async({page})=>{

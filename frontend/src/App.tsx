@@ -66,10 +66,11 @@ export default function App(){
   },[mobileNav,mobileViewport]);
   const notify=useCallback((message:string)=>setToast(message),[]);
   useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(timer)},[toast]);
+  const canManageSources=user?.role==='ADMIN';
   const refresh=useCallback(async()=>{
-    const [catalog,overview,topics,questions,bookmarks,sets,sources,sessions]=await Promise.all([api<Catalog>('/catalog'),api<Overview>('/analytics/overview'),api<TopicScore[]>('/analytics/topics'),api<Question[]>('/questions'),api<string[]>('/bookmarks'),api<PracticeSet[]>('/practice/sets'),api<SourceDocument[]>('/sources'),api<Session[]>('/interviews')]);
+    const [catalog,overview,topics,questions,bookmarks,sets,sources,sessions]=await Promise.all([api<Catalog>('/catalog'),api<Overview>('/analytics/overview'),api<TopicScore[]>('/analytics/topics'),api<Question[]>('/questions'),api<string[]>('/bookmarks'),api<PracticeSet[]>('/practice/sets'),canManageSources?api<SourceDocument[]>('/sources'):Promise.resolve([]),api<Session[]>('/interviews')]);
     if(mounted.current)setWorkspace({catalog,overview,topics,questions,bookmarks,sets,sources,sessions});
-  },[]);
+  },[canManageSources]);
   const load=useCallback(async()=>{setLoading(true);setError('');try{await refresh()}catch(e){setError(errorMessage(e));if(e instanceof ApiError&&e.status===401){clearToken();setUser(null)}}finally{setLoading(false)}},[refresh]);
   useEffect(()=>{mounted.current=true;if(getToken())api<User>('/me').then(setUser).catch(e=>{setError(errorMessage(e));if(e instanceof ApiError&&e.status===401)clearToken()}).finally(()=>setAuthLoading(false));return()=>{mounted.current=false}},[]);
   useEffect(()=>{if(user)void load()},[user,load]);
@@ -129,11 +130,10 @@ function Auth({onAuth,initialError}:{onAuth:(u:User)=>void;initialError:string})
       <div className="auth-copy">
         <h2>Prepare for your next interview</h2>
         <p>Practice for your target role and review your answers in one workspace.</p>
-        <ul className="auth-features">
-          <li><Bot size={20}/><div><strong>Role-specific interviews</strong><p>Answer five questions by typing or using your microphone.</p></div></li>
-          <li><BookOpen size={20}/><div><strong>Source-backed feedback</strong><p>Compare your answers with cited references.</p></div></li>
-          <li><ChartNoAxesCombined size={20}/><div><strong>Saved progress</strong><p>Review past sessions and see what to practice next.</p></div></li>
-        </ul>
+        <div className="auth-previews">
+          <img src="/assets/login-interview-preview.jpg" width={1326} height={584} alt="Interview room with a practice question and AVA" decoding="async"/>
+          <img src="/assets/login-behavioral-preview.jpg" width={1326} height={533} alt="Behavioral practice with a STAR sample answer and coaching chat" decoding="async"/>
+        </div>
       </div>
       <small>CSL374 / Project 10</small>
     </aside>

@@ -17,3 +17,5 @@ The additions cover Accessibility, Node.js, Security, Python, Java, and SQL. [W3
 ## Practice library and AVA portrait
 
 [practice/coding.json](practice/coding.json) contains 20 original Placement AI exercises, starter templates, examples, and hints. The AVA portrait in the frontend is an adaptation of the reference image supplied by the user. The built-in image tool removed the screenshot controls and reconstructed the obscured illustration.
+
+[practice/behavioral.json](practice/behavioral.json) contains eight original behavioral prompts with fictional primary and alternate STAR answers.

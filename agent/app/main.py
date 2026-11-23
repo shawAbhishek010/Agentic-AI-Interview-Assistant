@@ -19,7 +19,7 @@ from .engine import Bank, is_theory_prompt
 from .models import PlanRequest, EvaluateRequest, QueryRequest, Question, PlanResponse, Evaluation, QueryResponse, ChatRequest, ChatResponse
 from .local_slm import LocalSLM, LocalModelUnavailable
 from .models import InterviewCoaching, Trace
-from . import practice, study, speech
+from . import behavioral, practice, study, speech
 
 logger = logging.getLogger("placement.agent")
 bank: Bank | None = None
@@ -42,6 +42,7 @@ app = FastAPI(title="Placement AI Agent",version="1.0.0",description="Private, s
 app.include_router(study.router,dependencies=[Depends(internal_auth)])
 app.include_router(speech.router,dependencies=[Depends(internal_auth)])
 app.include_router(practice.router, dependencies=[Depends(internal_auth)])
+app.include_router(behavioral.router, dependencies=[Depends(internal_auth)])
 
 
 @app.middleware("http")

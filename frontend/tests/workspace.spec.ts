@@ -13,8 +13,10 @@ test('all six screens render actual data and an empty account has no invented pr
   const screens=[['AI Interview','AI interview'],['Practice Library','Practice library'],['Feedback & Analytics','Feedback & review'],['Resume Mock','Resume Mock'],['Knowledge Base','Knowledge base']];
   await expect(page.getByRole('navigation',{name:'Main navigation'}).getByRole('link')).toHaveCount(6);
   for(const [label,title] of screens){await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:label,exact:true}).click();await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();if(label==='Practice Library'){await expect(page.locator('.library-card').first()).toBeVisible();await page.screenshot({path:'../docs/screenshots/03-library.png',fullPage:true})}}
-  await expect(page.getByText('30 seconds of interviews',{exact:true})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Import a source'})).toBeDisabled();
+  await expect(page.getByRole('textbox',{name:'Ask the knowledge base'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Source library'})).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'Source library'})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Import a source'})).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

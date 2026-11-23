@@ -1,0 +1,138 @@
+[
+  {
+    "id": "missed-deadline",
+    "question": "A deadline slipped. How did you handle it?",
+    "answer": {
+      "situation": "My team was building a college event registration app. Two days before our review, an integration test showed that duplicate submissions could create multiple bookings.",
+      "task": "I owned the registration endpoint, so I needed to tell the team what was at risk and agree on what we could deliver safely.",
+      "action": "I reproduced the bug, estimated the fix with a teammate, and told our supervisor that the full feature set would miss the review. I proposed showing the core registration flow and moving the optional reminder feature to the next milestone. I added a database uniqueness constraint, handled repeat submissions, and wrote a test for the duplicate request.",
+      "result": "We demonstrated the corrected registration flow, and the team accepted the revised date for reminders. Afterward, I added an integration checkpoint before our final review so we could surface similar risks earlier."
+    },
+    "why_it_works": "It shows early communication, ownership of the fix, a clear scope decision, and a change to prevent a repeat.",
+    "alternative": {
+      "situation": "The supplier for a student workshop told us on Friday that the printed materials would arrive after Monday's session.",
+      "task": "I was coordinating materials and needed to keep the workshop usable with the time and budget we had.",
+      "action": "I confirmed the delivery date, told the facilitator about the delay, and asked which pages attendees needed during the exercises. I arranged to print those pages on campus and sent the full guide as a PDF.",
+      "result": "Attendees had the worksheets when the workshop started. For the next event, I set an earlier confirmation date and kept a printable backup."
+    }
+  },
+  {
+    "id": "team-disagreement",
+    "question": "Tell me about a disagreement on your team.",
+    "answer": {
+      "situation": "During a course project, a teammate wanted to rewrite our dashboard, while I thought the existing version could meet the deadline with targeted fixes.",
+      "task": "I needed to help the team choose an approach that addressed usability and fit the remaining time.",
+      "action": "I asked what the rewrite was intended to solve. The main concern was that people could not find filters on mobile. We watched a classmate try the task, compared a small prototype with our existing flow, and estimated both options. I proposed rebuilding the filter component and keeping the rest of the dashboard.",
+      "result": "We agreed on the narrower change and retested it with the same task. The classmate could find and apply the filter without help. The teammate who raised the issue also joined the review."
+    },
+    "why_it_works": "It takes the other person's concern seriously and shows how evidence helped the team reach a decision.",
+    "alternative": {
+      "situation": "Two volunteers disagreed about whether orientation should start with announcements or small-group introductions.",
+      "task": "As the session coordinator, I needed to settle the agenda and protect time for essential information.",
+      "action": "I asked both volunteers what they were trying to achieve. I proposed a brief opening for essential details, followed by introductions and a written handout for the remaining information. We rehearsed the timing together.",
+      "result": "The volunteers agreed to the sequence, and we covered the essentials while leaving time for introductions. I used the same process to plan our next session."
+    }
+  },
+  {
+    "id": "mistake",
+    "question": "Describe a time you made a mistake.",
+    "answer": {
+      "situation": "I changed a reporting query for a course project. I tested it with ordinary records and missed the case where a category had zero entries.",
+      "task": "I needed to correct the report and tell my teammates which figures they should recalculate.",
+      "action": "I acknowledged the error in our project channel, reproduced it using a small dataset, and traced it to the filter dropping empty categories. I fixed the query, added a regression test for that case, and regenerated the report before reviewing the figures with the teammate who found the issue.",
+      "result": "The corrected report included empty categories, and my teammate verified the totals. I added zero, missing, and boundary values to my test checklist for later changes."
+    },
+    "why_it_works": "It names the mistake, explains the impact, and describes both a correction and a preventive change.",
+    "alternative": {
+      "situation": "I emailed volunteers an outdated venue address because I reused last semester's reminder.",
+      "task": "I needed to correct the information quickly and make sure people had seen it.",
+      "action": "I sent a correction with the right address at the top, updated the calendar entry, and asked team leads to confirm with their groups. I replaced the old template with one that links to the current venue sheet.",
+      "result": "The team leads confirmed the update before the shift. At the next event, I checked the reminder against the venue sheet before sending it."
+    }
+  },
+  {
+    "id": "unclear-requirements",
+    "question": "Tell me about a project with unclear requirements.",
+    "answer": {
+      "situation": "A student club asked my team for a membership dashboard but had not specified who would use it or which tasks mattered most.",
+      "task": "I was responsible for defining the first release before the team committed to building it.",
+      "action": "I interviewed the club treasurer and secretary and asked them to walk through their current spreadsheet. I turned their main tasks into acceptance criteria, sketched two screens, and raised access permissions as an open question. While they reviewed the sketches, I built a prototype with sample data so we could test the workflow.",
+      "result": "The officers confirmed that renewal tracking and exports were essential. We agreed on those tasks for the first release and deferred charts. The prototype also surfaced the need for different viewing and editing permissions."
+    },
+    "why_it_works": "It makes the ambiguity concrete, shows who resolved it, and explains how useful work continued during the decision.",
+    "alternative": {
+      "situation": "A lab instructor asked for an automated summary of experiment results but gave us no output format.",
+      "task": "I needed to find out what the instructor compared during marking and build something we could verify.",
+      "action": "I asked for an anonymized example report, listed the fields it used, and drew a one-page template. While waiting for confirmation, I wrote reusable input validation and noted which assumptions were still open.",
+      "result": "The instructor approved the template with one extra column. We added it before building the report and verified the final output against the example."
+    }
+  },
+  {
+    "id": "learning-quickly",
+    "question": "Tell me about a time you learned something quickly.",
+    "answer": {
+      "situation": "Our team needed to hand a working demo to a mentor, but it ran only on my laptop. I had two days and had never set up a Docker development environment.",
+      "task": "I needed to package the app and its database so another person could run them from a clean checkout.",
+      "action": "I focused on images, environment variables, and volumes. I built a small sample first, applied what I learned to our project, and wrote a startup guide. I asked a teammate to follow it on a clean laptop. Their test exposed a missing environment variable, which I added to the example configuration.",
+      "result": "The teammate started the app and loaded the demo data without help. I used the setup for the handoff and documented what still needed to be configured for production."
+    },
+    "why_it_works": "It explains how the candidate prioritized material, applied it, and independently checked the handoff.",
+    "alternative": {
+      "situation": "I volunteered to summarize club survey responses the day before a committee meeting but had never used pivot tables.",
+      "task": "I needed to produce a reliable breakdown by event type.",
+      "action": "I practiced with a small copy of the spreadsheet, compared the pivot table with totals I calculated by hand, and documented how blanks were counted. I applied the same steps to the full survey.",
+      "result": "The totals matched the raw responses, and the committee could use the breakdown in the meeting. Another volunteer reused my steps for the next survey."
+    }
+  },
+  {
+    "id": "difficult-feedback",
+    "question": "Describe a time you received difficult feedback.",
+    "answer": {
+      "situation": "In a project review, my mentor said my code worked but was hard to review because one pull request mixed a schema change, a bug fix, and formatting.",
+      "task": "I needed to make the changes easy to verify and understand what the reviewer was struggling with.",
+      "action": "I asked the mentor to show me where they lost track of the changes. I separated the schema change from the fix, added a description and test instructions to each request, and moved the formatting into its own commit. I checked whether the new split made the review easier.",
+      "result": "The mentor could review the migration and fix independently. I started grouping later requests around a single purpose and added a brief verification checklist to each description."
+    },
+    "why_it_works": "It describes specific feedback, a visible behavior change, and a way to check whether the change helped.",
+    "alternative": {
+      "situation": "After a presentation rehearsal, my teammate said I spent too much time explaining technical details and barely covered the recommendation.",
+      "task": "I needed to revise the presentation so the audience could follow the decision.",
+      "action": "I asked which part they found hardest to follow. I moved the recommendation to the opening, kept one technical example, and put the details into backup slides. I rehearsed again and asked the teammate to summarize the main point.",
+      "result": "The teammate could explain the recommendation and the reason behind it. During the presentation, I used the backup slides only when someone asked for detail."
+    }
+  },
+  {
+    "id": "competing-priorities",
+    "question": "Tell me about a time you had to prioritize competing tasks.",
+    "answer": {
+      "situation": "The day before our project demo, I was assigned a dashboard styling update, an intermittent sign-in bug, and a cleanup of the setup instructions.",
+      "task": "I needed to decide what to finish first and share a realistic plan with the team.",
+      "action": "I ranked tasks by impact on the demo and by who was blocked. Sign-in could stop the whole demonstration, so I reproduced and fixed it first and asked a teammate to verify it. I corrected the one setup instruction our reviewer needed and told the team that the visual cleanup could wait.",
+      "result": "The reviewer signed in and followed the setup instructions without help. We completed the styling update after the demo. I shared the criteria with the team so they understood the trade-off."
+    },
+    "why_it_works": "It explains the prioritization criteria, communicates the trade-off, and connects the decision to an outcome.",
+    "alternative": {
+      "situation": "A volunteer shift was short-staffed on the same day we planned to update posters and confirm attendee registrations.",
+      "task": "I needed to use the remaining volunteers on work that affected the upcoming event.",
+      "action": "I prioritized shift coverage because it affected whether we could open on time. I asked another volunteer to send a short registration confirmation using our existing template. I let the organizer know the poster update would move to the next shift.",
+      "result": "The event opened with enough volunteers and attendees had their confirmation before arriving. We finished the posters when coverage was stable."
+    }
+  },
+  {
+    "id": "helping-a-teammate",
+    "question": "Tell me about helping someone overcome a blocker.",
+    "answer": {
+      "situation": "A teammate could not start our application locally and was blocked from working on their feature. The error mentioned a database connection, but the guide assumed everyone already had the same setup.",
+      "task": "I wanted to unblock the teammate and make the setup reproducible for the next person.",
+      "action": "I asked them to show me their commands and error. We compared their environment with a working one, found a port mismatch, and fixed it together. I had them restart the app on their own, then updated the guide with the required configuration and a troubleshooting step.",
+      "result": "They resumed work that afternoon. A teammate later used the updated guide for a fresh setup without needing a call."
+    },
+    "why_it_works": "It shows collaborative troubleshooting, verifies that the person can continue independently, and shares the fix.",
+    "alternative": {
+      "situation": "A lab partner had trouble explaining how their experimental measurements supported the conclusion.",
+      "task": "I needed to help them prepare for the review while making sure they understood their own reasoning.",
+      "action": "I asked them to describe what each measurement represented. Together we compared one row with the expected result, and they used that process to annotate the remaining rows. I asked them to explain the conclusion back to me in their own words.",
+      "result": "They could explain the evidence and answer a follow-up during practice. We kept the annotated example for the rest of the group."
+    }
+  }
+]

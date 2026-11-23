@@ -4,7 +4,9 @@ A source-grounded interview practice workspace for **CSL374 Project 10 — Place
 
 The application works without a paid model account. It retrieves licensed public Q&A, selects exactly **five distinct questions**, preserves reference answers and citations, and explains a transparent concept-coverage rubric. The optional local **Llama-3.2-3B-Instruct** service provides genuine source-grounded answer generation and optional interview follow-ups. Real model output and rule-based scores are labelled separately. **Built with Llama.** No paid API or Ollama is used.
 
-- **Practice Library → Coding IDE** offers 20 beginner exercises, starter code, and local hints and code review for Java, JavaScript, and Python. JavaScript examples and the free-form playground run in the browser. Built-in hints remain available when the local model is unavailable.
+- **Practice Library → Coding IDE** offers 20 beginner exercises and local hints for Java, JavaScript, and Python. **Submit solution** runs the displayed JavaScript examples in the browser. **Submit for review** uses a static check for simple integer return expressions in Java and Python and an advisory local-model walkthrough for other solutions. Java inputs and expected results fit the types in the starter signature. Built-in hints and static checks work without the local model.
+  - Enter follows the selected language's indentation. Use Tab and Shift+Tab to indent and outdent, Ctrl or Cmd plus / to toggle comments, and Ctrl or Cmd plus F to search. Ctrl or Cmd plus Enter runs JavaScript. Press Esc, then Tab to leave the editor.
+- **Practice Library → Behavioral** covers eight common interview questions. Each includes a fictional sample answer with Situation, Task, Action, and Result, plus an explanation of what makes it effective.
 - **Resume Mock** reads PDF, DOCX, TXT, or Markdown resumes up to 5 MB. AVA asks five questions from retrieved resume passages with a follow-up per question. Your account stores the supporting excerpts and ungraded answers. The original file is discarded after extraction.
 
 ![Placement AI overview](docs/screenshots/01-overview.png)
@@ -68,13 +70,19 @@ Logs and owned process IDs are in `.runtime`. The stop script checks process ide
 - Interview replies appear in **text and audio by default**, with a **Spoken replies** mute control. **Start voice interview** requests microphone consent, reads the question, listens for a candidate answer, and then displays and speaks the same feedback/follow-up. Follow-up responses use contextual chat without adding scored turns. Say **next question** or use its button to continue. **Ask with voice** remains available for ungraded clarification. Pause/end/navigation cancel speech and capture; typed chat always remains available.
 - **Knowledge Base → My study documents** accepts ordinary PDF/DOCX/TXT/Markdown prose for any signed-in user. Request an overview with cited sections, focus on specific topics, or create 1–5 practice questions. Revisit saved materials, download a Word document with numbered references, or delete your private document.
 
-Browser speech recognition varies by browser and can use a vendor's service. It requires explicit consent and a visible microphone state; typed input remains available. Placement AI stores answer text, not microphone audio. The interviewer is a CSS-animated robot, not live avatar video. Physical microphone/TTS behavior still needs a manual check on the presentation device.
+Browser speech recognition varies by browser and can use a vendor's service. It requires explicit consent and a visible microphone state; typed input remains available. Placement AI stores answer text, not microphone audio. AVA’s illustrated portrait indicates when she is speaking. Physical microphone/TTS behavior still needs a manual check on the presentation device.
 
 During a voice interview, say “I don’t know” or ask a specific question about what is unclear. Ava keeps the current interview question open while you ask for examples or clarification. Say **“My answer is…”** followed by your answer, or select **Ready to answer** when you want to return to the interview. For typed help, use **Ask Ava instead** or the Ask Ava box. For interview-related help, Ava uses the current reference, recent conversation, and any saved candidate answer and asked follow-up. With local Llama enabled, Ava explains the topic and gives specific coaching on submitted answers. The rubric stays in the feedback view. Explanations remain visible and are spoken unless muted. Long replies are spoken in sequential chunks, and the microphone resumes after the final chunk.
 
 Personal study documents are separate from the administrator-managed public Q&A bank. They need no existing Q:/A: formatting or public provenance URL. Text extraction supports readable documents; scanned PDFs require OCR beforehand. Private chunks/materials are stored in the owner's database record, never added to the shared source catalog. If inference fails, source-extracted fallback notes/prompts are clearly labelled.
 
 Interview scores remain transparent lexical proxies even when the local model is available. Optional generated interview follow-ups can be enabled with `LOCAL_SLM_FOLLOWUPS=true` in `.env`, followed by recreating the agent with both Compose files. They have a 12-second budget and fall back to the source template. Default follow-ups remain deterministic for fast, reproducible practice. Stored evaluation metadata identifies the actual follow-up origin.
+
+### Practice behavioral questions
+
+Open **Practice Library → Behavioral** and choose a question. Read the sample STAR answer, then use **Show another example** or paste a draft based on your own experience into **Behavioral coach**. Ask follow-up questions about how to clarify your role, describe your actions, or explain the outcome.
+
+The coach uses the optional local Llama service from the Docker instructions above. When the model is disabled, busy, or unreachable, the coach shows a labeled second fictional example for the selected question. Your conversation stays in the current question view and is cleared when you switch questions or leave the tab. Behavioral practice is ungraded.
 
 ## Data and retrieval
 
@@ -115,7 +123,7 @@ npm run test:e2e
 node scripts/smoke.mjs
 ```
 
-Browser tests require a running app. To use Compose, set `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088`. Tests cover real API interactions, five-answer completion, bookmarks/custom sets, retrieval/fallback, simulated microphone denial, and mobile layout/navigation.
+Browser tests require a running app. To use Compose, set `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088`. Tests cover real API interactions, five-answer completion, bookmarks/custom sets, behavioral sample answers and follow-up chat, retrieval/fallback, simulated microphone denial, and mobile layout/navigation.
 
 Import [the Postman collection](docs/Placement-AI.postman_collection.json) and run it in order. Its default `base_url` is `http://127.0.0.1:8088`; use port 5173 locally. Auth/session variables are captured automatically. The collection has also been executed through Newman; [the summary](docs/evidence/postman-summary.json) records requests and assertions without authentication tokens.
 

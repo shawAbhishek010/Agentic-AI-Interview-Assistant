@@ -2,10 +2,12 @@
 import {Lightbulb,Play,RotateCcw} from 'lucide-react';
 import {api,errorMessage,post} from './api';
 import {Badge,Button,ErrorBox,Panel,Spinner} from './components';
+import {CodeEditor} from './CodeEditor';
 import type {Challenge,CodingLanguage,CodingReply,RunResult} from './coding-types';
 
 const LANGUAGES:Record<CodingLanguage,string>={javascript:'JavaScript',java:'Java',python:'Python'};
 const PLAYGROUND_START='const values = [1, 2, 3];\nconsole.log(values.map(value => value * 2));\n';
+type CoachAction='hint'|'review';
 
 export function CodingPractice(){
   const [challenges,setChallenges]=useState<Challenge[]>([]);
@@ -15,10 +17,10 @@ export function CodingPractice(){
   const [drafts,setDrafts]=useState<Record<string,string>>({});
   const [loading,setLoading]=useState(true);
   const [running,setRunning]=useState(false);
-  const [coaching,setCoaching]=useState(false);
+  const [coaching,setCoaching]=useState<CoachAction|null>(null);
   const [error,setError]=useState('');
   const [result,setResult]=useState<RunResult|null>(null);
-  const [reply,setReply]=useState<CodingReply|null>(null);
+  const [reply,setReply]=useState<(CodingReply & {action:CoachAction})|null>(null);
   const activeWorker=useRef<Worker|null>(null);
   const runTimer=useRef<number|undefined>(undefined);
 
@@ -34,7 +36,8 @@ export function CodingPractice(){
   const key=mode==='playground'?'playground':challengeId+'-'+language;
   const starter=mode==='playground'?PLAYGROUND_START:(challenge?.starter[language]??'');
   const code=drafts[key]??starter;
-  const disabled=running||coaching;
+  const disabled=running||coaching!==null;
+  const editorLanguage=mode==='playground'?'javascript':language;
 
   function resetOutput(){
     setResult(null);
@@ -42,8 +45,8 @@ export function CodingPractice(){
     setError('');
   }
 
-  function run(){
-    if(running||!code.trim())return;
+  function run(source=code){
+    if(disabled||!source.trim())return;
     resetOutput();
     let worker:Worker;
     try {
@@ -65,20 +68,20 @@ export function CodingPractice(){
     worker.onmessage=event=>finish(event.data as RunResult);
     worker.onerror=()=>finish({cases:[],logs:[],error:'The JavaScript sandbox could not start.'});
     runTimer.current=window.setTimeout(()=>finish({cases:[],logs:[],error:'Timed out. Check for a long or infinite loop.'}),9000);
-    worker.postMessage({code,examples:mode==='challenge'?(challenge?.examples??[]):[]});
+    worker.postMessage({code:source,examples:mode==='challenge'?(challenge?.examples??[]):[]});
   }
 
-  async function coach(action:'hint'|'review'){
+  async function coach(action:CoachAction){
     if(!challenge||disabled)return;
-    setCoaching(true);
-    setError('');
-    setReply(null);
+    setCoaching(action);
+    resetOutput();
     try {
-      setReply(await post<CodingReply>('/coding/coach',{challenge_id:challenge.id,language,action,code},45000));
+      const response=await post<CodingReply>('/coding/coach',{challenge_id:challenge.id,language,action,code},45000);
+      setReply({...response,action});
     } catch (error) {
       setError(errorMessage(error));
     } finally {
-      setCoaching(false);
+      setCoaching(null);
     }
   }
 
@@ -104,21 +107,33 @@ export function CodingPractice(){
         {mode==='challenge'?<div className="tabs code-language-tabs" role="group" aria-label="Programming language">
           {(Object.keys(LANGUAGES) as CodingLanguage[]).map(item=><button key={item} className={item===language?'active':''} aria-pressed={item===language} disabled={disabled} onClick={()=>{resetOutput();setLanguage(item)}}>{LANGUAGES[item]}</button>)}
         </div>:null}
-        <label className="sr-only" htmlFor="coding-editor">Your code</label>
-        <textarea id="coding-editor" value={code} disabled={disabled} maxLength={12000} spellCheck={false} autoCapitalize="off" onChange={event=>{resetOutput();setDrafts(previous=>({...previous,[key]:event.target.value}))}}/>
+        <CodeEditor draftKey={key} code={code} language={editorLanguage} readOnly={disabled}
+          onChange={value=>{resetOutput();setDrafts(previous=>({...previous,[key]:value}))}}
+          onRun={editorLanguage==='javascript'?run:undefined}/>
         <div className="coding-actions">
-          {(mode==='playground'||language==='javascript')?<Button disabled={!code.trim()||coaching} busy={running} onClick={run}><Play size={15}/>{mode==='challenge'?'Run examples':'Run JavaScript'}</Button>:null}
+          {editorLanguage==='javascript'?<Button disabled={!code.trim()||disabled} busy={running} onClick={()=>run()}><Play size={15}/>{mode==='challenge'?'Submit solution':'Run JavaScript'}</Button>:null}
+          {mode==='challenge'&&editorLanguage!=='javascript'?
+            <Button disabled={!code.trim()||disabled} busy={coaching==='review'} onClick={()=>void coach('review')}>Submit for review</Button>:null}
           {mode==='challenge'?<>
-            <Button variant="secondary" disabled={disabled} onClick={()=>void coach('hint')}><Lightbulb size={15}/>Get a hint</Button>
-            <Button variant="secondary" disabled={!code.trim()||running} busy={coaching} onClick={()=>void coach('review')}>Review code</Button>
+            <Button variant="secondary" disabled={disabled} busy={coaching==='hint'} onClick={()=>void coach('hint')}><Lightbulb size={15}/>Get a hint</Button>
           </>:null}
           <button className="text-button" disabled={disabled||code===starter} onClick={()=>{resetOutput();setDrafts(previous=>({...previous,[key]:starter}))}}><RotateCcw size={14}/>Reset editor</button>
         </div>
-        {mode==='challenge'&&language!=='javascript'?<p className="small-text muted">Hints and review are available for {LANGUAGES[language]}. The browser playground executes JavaScript.</p>:null}
-        {coaching?<p className="small-text muted" role="status">Waiting for the local coding coach…</p>:null}
-        {reply?<section className="coding-output" aria-live="polite"><div className="panel-heading"><h3>Coding coach</h3><Badge tone="subtle">{reply.mode==='local_slm'?'Local Llama':'Built-in hint'}</Badge></div>{reply.warning?<p className="small-text muted">{reply.warning}</p>:null}<p className="reference-text">{reply.text}</p></section>:null}
+        {mode==='challenge'?<p className="small-text muted">{editorLanguage==='javascript'
+          ?'Submission runs the examples shown here in the browser.'
+          :editorLanguage==='java'
+            ?'Java submissions get a source walkthrough. Inputs and expected results fit the types in the starter signature.'
+            :'Python submissions get a source walkthrough using the examples.'}</p>:null}
+        {coaching?<p className="small-text muted" role="status">{coaching==='review'?'Reviewing against the examples…':'Waiting for a hint…'}</p>:null}
+        {reply?<section className="coding-output" aria-live="polite">
+          <div className="panel-heading"><h3>{reply.action==='review'?'Source review':'Coding coach'}</h3>
+            <Badge tone="subtle">{reply.review_basis==='static'?'Static check':reply.mode==='local_slm'?'Local Llama':reply.action==='review'?'Review guidance':'Built-in hint'}</Badge></div>
+          <p className="reference-text">{reply.text}</p>
+          {reply.warning?<p className="small-text muted">{reply.warning}</p>:null}
+        </section>:null}
         {result?<section className="coding-output" aria-live="polite">
-          <h3>{mode==='challenge'?'Example results':'Console'}</h3>
+          <h3>{mode==='challenge'?'Submission results':'Console'}</h3>
+          {mode==='challenge'&&challenge?<p>{result.cases.filter(item=>item.passed).length} of {challenge.examples.length} examples passed.</p>:null}
           {result.error?<ErrorBox message={result.error}/>:null}
           {result.cases.map((item,index)=><div className="coding-case" key={index}><span>Example {index+1}</span><Badge tone={item.passed?'cyan':'amber'}>{item.passed?'Passed':'Failed'}</Badge><code>Expected {item.expected} · Got {item.actual}</code></div>)}
           {result.logs.length?<pre>{result.logs.join('\n')}</pre>:null}
@@ -127,24 +142,4 @@ export function CodingPractice(){
       </Panel>
     </div>:null}
   </div>;
-}
-
-const BEHAVIORAL_QUESTIONS=[
-  ['A deadline slipped. How did you handle it?','Explain what changed, how you communicated, and how you adjusted the plan.'],
-  ['Tell me about a disagreement on your team.','Describe what each side needed and how you worked toward a decision.'],
-  ['Describe a time you made a mistake.','Show how you identified it, took responsibility, and prevented a repeat.'],
-  ['Tell me about a project with unclear requirements.','Explain what you clarified and what you did while waiting for answers.'],
-  ['Tell me about a time you learned something quickly.','Explain how you chose what to learn, applied it, and checked your understanding.'],
-  ['Describe a time you received difficult feedback.','Give a concrete change you made and what happened afterward.'],
-  ['Tell me about a time you had to prioritize competing tasks.','Describe your criteria, the trade-off you made, and its impact.'],
-  ['Tell me about helping someone overcome a blocker.','Explain how you identified the blocker and what you did to help.'],
-];
-
-export function BehavioralPractice(){
-  return <Panel title="Behavioral questions">
-    <p className="muted">Practice with a real example. Cover the situation, task, action, and result.</p>
-    <div className="behavioral-questions">{BEHAVIORAL_QUESTIONS.map(([question,prompt])=><details key={question}>
-      <summary>{question}</summary><p>{prompt}</p>
-    </details>)}</div>
-  </Panel>;
 }

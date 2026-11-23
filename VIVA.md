@@ -2,8 +2,6 @@
 
 **CSL374 Project 10 · Placement Interview Prep Bot**
 
-The main guide covers the published application. Section 4 describes enhancements available in the current local demo.
-
 ## 1. Project overview and architecture
 
 **30-second introduction.** Placement AI helps students prepare for placement interviews. A student chooses a role and gets five distinct theory questions from a licensed question bank, each with a reference answer, a citation, and one follow-up. Ava speaks the questions and feedback, and the app saves answers and shows which concepts the student covered. Students can also practice coding, generate private study notes, and start a mock interview from their resume. The optional local Llama model supports coaching. Question selection and scoring use deterministic rules.
@@ -67,7 +65,7 @@ PostgreSQL stores user accounts, interview snapshots, answers, conversations, bo
 
 **How do private study notes work?** An overview selects passages across the document. A focused request ranks passages against the student's topic. The agent retains each section's sources and can return an extractive fallback. The browser generates a `.docx` file with the saved content and numbered references. [Study retrieval](agent/app/study.py) · [Word export](frontend/src/StudyWorkspace.tsx)
 
-## 4. Enhancements in the current local demo
+## 4. Behavioral practice, coding, and workspace features
 
 - **Behavioral practice** pairs eight questions with fictional STAR answers covering Situation, Task, Action, and Result. The Behavioral coach can give an alternate example or review a draft. It uses recent messages from the selected question and offers a labeled built-in example when local inference is unavailable.
 - **Language-aware editing** uses CodeMirror for Java, JavaScript, and Python indentation, undo and redo, comments, and search. Drafts and undo history are kept when switching challenges or languages. Press Esc, then Tab to move focus out of the editor.

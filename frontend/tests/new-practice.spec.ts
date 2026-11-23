@@ -12,16 +12,22 @@ test('coding practice runs examples and isolates the JavaScript playground',asyn
   const editor=page.getByRole('textbox',{name:'Your code'});
   await expect(page.getByRole('combobox',{name:'Challenge',exact:true}).locator('option')).toHaveCount(20);
   await editor.fill('const solve = (a, b) => a + b;');
-  await page.getByRole('button',{name:'Run examples'}).click();
+  await page.getByRole('button',{name:'Submit solution'}).click();
+  await expect(page.getByText('2 of 2 examples passed.')).toBeVisible();
   await expect(page.getByText('Passed',{exact:true})).toHaveCount(2);
+  await editor.fill('const solve = (a, b) => a - b;');
+  await page.getByRole('button',{name:'Submit solution'}).click();
+  await expect(page.getByText('0 of 2 examples passed.')).toBeVisible();
+  await expect(page.getByText('Failed',{exact:true})).toHaveCount(2);
+  await editor.fill('const solve = (a, b) => a + b;');
   await page.getByRole('button',{name:'Java',exact:true}).click();
-  await expect(editor).toHaveValue(/static int solve/);
+  await expect(editor).toContainText('static int solve');
   await page.getByRole('button',{name:'Get a hint'}).click();
   await expect(page.getByRole('heading',{name:'Coding coach'})).toBeVisible({timeout:40000});
   await page.getByRole('button',{name:'Python',exact:true}).click();
-  await expect(editor).toHaveValue(/def solve/);
+  await expect(editor).toContainText('def solve');
   await page.getByRole('button',{name:'JavaScript',exact:true}).click();
-  await expect(editor).toHaveValue('const solve = (a, b) => a + b;');
+  await expect(editor).toHaveText('const solve = (a, b) => a + b;');
   await page.getByRole('button',{name:'JavaScript playground'}).click();
   await editor.fill('console.log(6 * 7, typeof fetch, typeof localStorage, typeof XMLHttpRequest);');
   await page.getByRole('button',{name:'Run JavaScript'}).click();
@@ -34,6 +40,123 @@ test('coding practice runs examples and isolates the JavaScript playground',asyn
   await expect(page.getByText('ready again',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Behavioral',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Behavioral questions'})).toBeVisible();
+});
+
+test('code editor indents each language and supports common keyboard shortcuts',async({page})=>{
+  await page.getByRole('link',{name:'Practice Library',exact:true}).click();
+  await page.getByRole('button',{name:'Coding IDE'}).click();
+  const editor=page.getByRole('textbox',{name:'Your code'});
+  const lines=()=>editor.locator('.cm-line').allTextContents();
+
+  await page.getByRole('button',{name:'Java',exact:true}).click();
+  await editor.fill('class Solution {\n    static int solve(int a, int b) {\n        // Write your solution here.\n    }\n}');
+  await editor.press('Control+Home');
+  await editor.press('ArrowDown');
+  await editor.press('ArrowDown');
+  await editor.press('End');
+  await editor.press('Enter');
+  await page.keyboard.insertText('return a + b;');
+  await expect.poll(async()=>(await lines())[3]).toBe('        return a + b;');
+
+  await editor.press('Control+a');
+  await editor.press('Tab');
+  await expect.poll(async()=>(await lines())[0]).toBe('    class Solution {');
+  await editor.press('Shift+Tab');
+  await expect.poll(async()=>(await lines())[0]).toBe('class Solution {');
+  await editor.press('Control+/');
+  await expect.poll(async()=>(await lines())[0]).toBe('// class Solution {');
+  await editor.press('Control+z');
+  await expect.poll(async()=>(await lines())[0]).toBe('class Solution {');
+  await editor.press('Control+y');
+  await expect.poll(async()=>(await lines())[0]).toBe('// class Solution {');
+  await editor.press('Control+f');
+  await expect(page.locator('.cm-search input[name="search"]')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(editor).toBeFocused();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Tab');
+  await expect(editor).not.toBeFocused();
+
+  await page.getByRole('button',{name:'Python',exact:true}).click();
+  await editor.fill('def solve(a, b):');
+  await editor.press('Control+End');
+  await editor.press('Enter');
+  await page.keyboard.insertText('return a + b');
+  await expect.poll(lines).toEqual(['def solve(a, b):','    return a + b']);
+  await editor.press('Control+/');
+  await expect.poll(async()=>(await lines())[1]).toBe('    # return a + b');
+
+  await page.getByRole('button',{name:'Java',exact:true}).click();
+  await expect.poll(async()=>(await lines())[0]).toBe('// class Solution {');
+  await editor.press('Control+z');
+  await expect.poll(async()=>(await lines())[0]).toBe('class Solution {');
+
+  await page.getByRole('button',{name:'JavaScript',exact:true}).click();
+  await editor.fill('function solve(a, b) {}');
+  await editor.press('Control+End');
+  await editor.press('ArrowLeft');
+  await editor.press('Enter');
+  await page.keyboard.insertText('return a + b;');
+  await expect.poll(lines).toEqual(['function solve(a, b) {','  return a + b;','}']);
+  await editor.press('Control+Enter');
+  await expect(page.getByText('Passed',{exact:true})).toHaveCount(2);
+  await expect(editor).toBeFocused();
+  const challenge=page.getByRole('combobox',{name:'Challenge',exact:true});
+  await challenge.selectOption({index:1});
+  await challenge.selectOption({index:0});
+  await expect.poll(lines).toEqual(['function solve(a, b) {','  return a + b;','}']);
+});
+
+test('Java submission sends the current solution and labels the source walkthrough',async({page})=>{
+  await page.getByRole('link',{name:'Practice Library',exact:true}).click();
+  await page.getByRole('button',{name:'Coding IDE',exact:true}).click();
+  await page.getByRole('button',{name:'Java',exact:true}).click();
+  const code='class Solution { static int solve(int a, int b) { return a+b; } }';
+  await page.getByRole('textbox',{name:'Your code'}).fill(code);
+  const response=page.waitForResponse(item=>item.url().endsWith('/api/coding/coach')&&item.request().method()==='POST');
+  await page.getByRole('button',{name:'Submit for review'}).click();
+  const review=await response;
+  expect(review.status()).toBe(200);
+  expect(review.request().postDataJSON()).toEqual({challenge_id:'sum-two',language:'java',action:'review',code});
+  const result=await review.json();
+  expect(result.review_basis).toBe('static');
+  await expect(page.getByRole('heading',{name:'Source review'})).toBeVisible();
+  await expect(page.getByText('Static check',{exact:true})).toBeVisible();
+  await expect(page.locator('.coding-output')).toContainText(result.text);
+  await expect(page.locator('.coding-output')).toContainText('matches the expected values for all 2 examples');
+  await expect(page.getByRole('heading',{name:'Submission results'})).toHaveCount(0);
+});
+
+test('behavioral practice shows detailed STAR answers and carries a follow-up in the current question',async({page})=>{
+  test.setTimeout(110000);
+  await page.getByRole('link',{name:'Practice Library',exact:true}).click();
+  await page.getByRole('button',{name:'Behavioral',exact:true}).click();
+  const question=page.getByRole('combobox',{name:'Practice question'});
+  await expect(question.locator('option')).toHaveCount(8);
+  await question.selectOption('team-disagreement');
+  await expect(page.locator('.behavioral-answer dt')).toHaveText(['situation','task','action','result']);
+  await expect(page.locator('.behavioral-answer')).toContainText('rebuilding the filter component');
+  await expect(page.getByRole('heading',{name:'Why this works'})).toBeVisible();
+  const log=page.getByRole('log',{name:'Behavioral coaching conversation'});
+  await page.getByRole('button',{name:'Show another example'}).click();
+  await expect(log.locator('.conversation-message.assistant')).toHaveCount(1,{timeout:45000});
+  await expect(log.getByText(/^(Local Llama|Built-in example)$/)).toBeVisible();
+  const firstReply=await log.locator('.conversation-message.assistant p').textContent();
+  const request=page.waitForRequest(req=>req.method()==='POST'&&req.url().endsWith('/api/behavioral/chat'));
+  await page.getByRole('textbox',{name:'Ask the behavioral coach'}).fill('How could I explain the result more effectively?');
+  await page.getByRole('button',{name:'Send',exact:true}).click();
+  expect((await request).postDataJSON()).toEqual({
+    question_id:'team-disagreement',
+    message:'How could I explain the result more effectively?',
+    history:[
+      {role:'user',content:'Give me another sample answer using a different scenario.'},
+      {role:'assistant',content:firstReply},
+    ],
+  });
+  await expect(log.locator('.conversation-message.assistant')).toHaveCount(2,{timeout:45000});
+  await question.selectOption('mistake');
+  await expect(log.locator('.conversation-message')).toHaveCount(0);
+  await expect(page.locator('.behavioral-answer')).toContainText('regression test');
 });
 
 test('Resume Mock cites five passages and saves an owner-only, ungraded interview',async({page,request})=>{
